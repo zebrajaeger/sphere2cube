@@ -27,7 +27,10 @@ public class TargetImage implements ITargetImage {
     }
 
     public void save(File file) throws IOException {
-        ImageIO.write(image, "jpg", file);
+        ImageIO.write(image, "png", file);
+    }
+    public void save(String filePath) throws IOException {
+        save(new File(filePath));
     }
 
     @Override

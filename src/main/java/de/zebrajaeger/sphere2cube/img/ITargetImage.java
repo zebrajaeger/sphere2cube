@@ -14,4 +14,6 @@ public interface ITargetImage {
     int getH();
 
     void save(File file) throws IOException;
+
+    void save(String filePath) throws IOException;
 }

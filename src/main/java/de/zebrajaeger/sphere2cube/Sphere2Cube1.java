@@ -8,7 +8,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class App {
+/**
+ * Single equirectangular spherical Image to single cube image
+ */
+public class Sphere2Cube1 {
 
     private WritableRaster sourceRaster;
     private BufferedImage source;
@@ -19,7 +22,7 @@ public class App {
     private int edge;
 
     public static void main(String[] args) throws IOException {
-        new App().process();
+        new Sphere2Cube1().process();
     }
 
     private void outImgToXYZ(Xyz xyz, int i, int j, int face, int edge) {
@@ -89,9 +92,6 @@ public class App {
     }
 
     public void process() throws IOException {
-        String formats = Arrays.stream(ImageIO.getReaderFormatNames()).collect(Collectors.joining(", "));
-        System.out.println(formats);
-
         File sourceFile = new File("samples/buckingham.jpg");
         File targetFile = new File("out.jpg");
         source = ImageIO.read(sourceFile);

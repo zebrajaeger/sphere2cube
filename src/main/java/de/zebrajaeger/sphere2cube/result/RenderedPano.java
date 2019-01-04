@@ -37,8 +37,23 @@ public class RenderedPano {
         return levels;
     }
 
+    public View getView() {
+        return view;
+    }
+
     public enum Type {
-        CUBIC
+        CUBIC("cubic")
+        ;
+
+        private String label;
+
+        Type(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
     }
 
     @Override

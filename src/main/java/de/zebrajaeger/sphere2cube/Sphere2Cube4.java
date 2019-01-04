@@ -4,6 +4,9 @@ import de.zebrajaeger.sphere2cube.img.ISourceImage;
 import de.zebrajaeger.sphere2cube.img.ITargetImage;
 import de.zebrajaeger.sphere2cube.img.SourceImage;
 import de.zebrajaeger.sphere2cube.img.TargetImage;
+import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGenerator;
+import de.zebrajaeger.sphere2cube.indexhtml.IndexHtml;
+import de.zebrajaeger.sphere2cube.panoxml.PanoXmlGenerator;
 import de.zebrajaeger.sphere2cube.result.Level;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
 import de.zebrajaeger.sphere2cube.result.View;
@@ -12,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,10 +45,16 @@ public class Sphere2Cube4 {
     private ITargetImage target;
 
     public static void main(String[] args) throws IOException {
-        Sphere2Cube4 s2c = new Sphere2Cube4("target/tiles/%s/%l/l%l_%y_%x.jpg");
+        Sphere2Cube4 s2c = new Sphere2Cube4("target/pano/tiles/%s/%l/l%l_%y_%x.jpg");
 
         //s2c.renderPano(new File("samples/buckingham.jpg"), 512);
-        s2c.renderPano(new File("samples/raster(5000x2500).png"), 512);
+        FileUtils.deleteDirectory(new File("target/pano"));
+
+        s2c.renderPano(
+                new File("samples/raster(5000x2500).png"),
+                new File("target/pano/pano.xml"),
+                new File("target/pano/index.html"),
+                512);
 
         //new Sphere2Cube4().renderPano(new File("samples/pano2(10000x5000).jpg"));
         //new Sphere2Cube4().renderPano(new File("samples/pano2(10000x5000).jpg"));
@@ -54,9 +64,14 @@ public class Sphere2Cube4 {
         tileNameGenerator = KrPanoTileNameGenerator.of(tilePattern);
     }
 
-    public void renderPano(File sourceFile, int tileEdge) throws IOException {
+    public void renderPano(File sourceFile, File panoXmlFile, File indexHtmlFile,int tileEdge) throws IOException {
         RenderedPano renderedPano = renderPano(SourceImage.of(sourceFile).fov(180d, 0d, 90d, 0d), tileEdge);
-        System.out.println(renderedPano);
+
+        String panoXml = PanoXmlGenerator.of().generate(renderedPano);
+        FileUtils.write(panoXmlFile, panoXml, StandardCharsets.UTF_8);
+
+        String indexHtml = IndexHtmGenerator.of().generate(new IndexHtml("TestPano"));
+        FileUtils.write(indexHtmlFile, indexHtml, StandardCharsets.UTF_8);
     }
 
     public RenderedPano renderPano(SourceImage sourceFile, int tileEdge) throws IOException {
@@ -64,7 +79,6 @@ public class Sphere2Cube4 {
         inW = source.getW();
         inH = source.getH();
 
-        FileUtils.deleteDirectory(new File("target/tiles"));
         Map<Face, List<Level>> faceListMap = renderFaces(inW / 4, 1024, tileEdge);
         return new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, new View(), faceListMap.get(Face.FRONT));
     }

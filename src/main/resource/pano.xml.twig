@@ -1,0 +1,20 @@
+<krpano>
+
+    <!-- the skin -->
+    <include url="skin/defaultskin.xml" />
+
+    <!-- view settings -->
+    <view hlookat="{{pano.view.hlookat}}" vlookat="{{pano.view.vlookat}}" maxpixelzoom="{{pano.view.maxpixelzoom}}" fovmax="{{pano.view.fovmax}}" limitview="{{pano.view.limitview}}" />
+
+
+    <preview url="tiles/preview.jpg" />
+
+    <image type="{{ pano.type.label }}" multires="{{ pano.multires }}" tilesize="{{ pano.tileSize }}">
+        {% for level in pano.levels %}
+        <level tiledimagewidth="{{ level.w }}" tiledimageheight="{{ level.h }}">
+            <cube url="tiles/%s/l{{ level.index }}/l{{ level.index }}_%s_%v_%h.jpg" />
+        </level>
+        {% endfor %}
+    </image>
+
+</krpano>

@@ -21,7 +21,7 @@ public class SourceImage implements ISourceImage {
 
     private double fovX = 360d;
     private double offX = 0d;
-    private double fovY = 18d;
+    private double fovY = 180d;
     private double offY = 0d;
 
     private int minX;
@@ -29,7 +29,7 @@ public class SourceImage implements ISourceImage {
     private int minY;
     private int maxY;
 
-    private float[] outBoundColor = new float[]{0f, 0f, 0f, 0f};
+    private double[] outBoundColor = new double[]{0f, 0f, 0f, 0f};
 
     public static SourceImage of(File file) throws IOException {
         return new SourceImage().read(file);
@@ -61,7 +61,7 @@ public class SourceImage implements ISourceImage {
 
         if (fovY != null) {
             this.fovY = fovY;
-            this.h = (int) (iH * fovY);
+            this.h = (int) (iH * 180d / fovY);
             this.w = this.h * 2;
             this.fovX = 360d * iW / (double) this.w;
         }
@@ -75,8 +75,8 @@ public class SourceImage implements ISourceImage {
         // x leads
         if (fovX != null) {
             this.fovX = fovX;
-            this.w = (int) (iW * fovX);
-            this.h = this.h / 2;
+            this.w = (int) (iW * 360d / fovX);
+            this.h = this.w / 2;
             this.fovY = 180d * iH / (double) this.h;
         }
         if (offX != null) {
@@ -98,7 +98,7 @@ public class SourceImage implements ISourceImage {
 
     public void readPixel(int x, int y, double[] result) {
         if (x >= this.minX && x < this.maxX && y >= this.minY && y < this.maxY) {
-            raster.getPixel(x, y, result);
+            raster.getPixel(x - minX, y - minY, result);
         } else {
             System.arraycopy(outBoundColor, 0, result, 0, result.length);
         }

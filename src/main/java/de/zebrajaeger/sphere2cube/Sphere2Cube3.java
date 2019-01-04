@@ -11,6 +11,7 @@ import java.io.IOException;
 /**
  * Single equirectangular spherical Image to multible cube images
  */
+@SuppressWarnings("Duplicates")
 public class Sphere2Cube3 {
 
     private int inW;

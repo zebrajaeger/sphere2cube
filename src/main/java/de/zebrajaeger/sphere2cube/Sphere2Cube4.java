@@ -4,6 +4,8 @@ import de.zebrajaeger.sphere2cube.img.ISourceImage;
 import de.zebrajaeger.sphere2cube.img.ITargetImage;
 import de.zebrajaeger.sphere2cube.img.SourceImage;
 import de.zebrajaeger.sphere2cube.img.TargetImage;
+import de.zebrajaeger.sphere2cube.tile.KrPanoTileNameGenerator;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,8 +13,10 @@ import java.io.IOException;
 /**
  * Single equirectangular spherical Image to multible cube images
  */
+@SuppressWarnings("Duplicates")
 public class Sphere2Cube4 {
 
+    private final KrPanoTileNameGenerator tileNameGenerator;
     private int inW;
     private int inH;
 
@@ -30,18 +34,23 @@ public class Sphere2Cube4 {
     private ITargetImage target;
 
     public static void main(String[] args) throws IOException {
-        new Sphere2Cube4().process(new File("samples/buckingham(1024 x512).jpg"));
+        new Sphere2Cube4("target/tiles/%s_l%l_%y_%x.jpg").process(new File("samples/buckingham.jpg"));
         //new Sphere2Cube4().process(new File("samples/pano2(10000x5000).jpg"));
         //new Sphere2Cube4().process(new File("samples/pano2(10000x5000).jpg"));
     }
 
+    public Sphere2Cube4(String tilePattern) {
+        tileNameGenerator = KrPanoTileNameGenerator.of(tilePattern);
+    }
+
     public void process(File sourceFile) throws IOException {
-        source = SourceImage.of(sourceFile);
+        source = SourceImage.of(sourceFile).fov(180d, 0d, 90d, 0d);
 
         inW = source.getW();
         inH = source.getH();
 
-        renderFaces(inW, 1024, 1024);
+        FileUtils.deleteDirectory(new File("target/tiles"));
+        renderFaces(inW / 4, 1024, 512);
     }
 
     void renderFaces(int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
@@ -52,20 +61,17 @@ public class Sphere2Cube4 {
 
     private void renderFace(Face face, int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
         int targetEdge = srcEdge; // TODO ok??
+        int layer = 1;
         do {
-            renderLayer(face, srcEdge, targetEdge, tileEdge);
+            renderLayer(face, layer, srcEdge, targetEdge, tileEdge);
             targetEdge /= 2;
+            ++layer;
         } while (targetEdge > minTargetEdge);
     }
 
-    private void renderLayer(Face face, int srcEdge, int targetEdge, int tileEdge) throws IOException {
+    private void renderLayer(Face face, int layer, int srcEdge, int targetEdge, int tileEdge) throws IOException {
         double srcEdgeD = srcEdge;
         double targetEdgeD = targetEdge;
-
-        File parent = new File(String.format("target/tiles/"));
-        if (!parent.exists()) {
-            parent.mkdirs();
-        }
 
         int x = 0;
         for (int x1 = 0; x1 < targetEdge; x1 += tileEdge) {
@@ -79,7 +85,7 @@ public class Sphere2Cube4 {
                         targetEdgeD,
                         x1, x2,
                         y1, y2,
-                        new File(parent, String.format("%s_%04dx%04d.png",face.getFilePrefix(), x, y)));
+                        new File(tileNameGenerator.generateName(face, layer, x, y)));
                 ++y;
             }
             ++x;
@@ -179,19 +185,6 @@ public class Sphere2Cube4 {
             case BOTTOM:
                 xyz.set(1d - b, a - 1d, -1d);
                 break;
-        }
-    }
-    private enum Face {
-        BACK("b"), LEFT("l"), FRONT("f"), RIGHT("r"), TOP("u"), BOTTOM("d");
-
-        private String filePrefix;
-
-        Face(String filePrefix) {
-            this.filePrefix = filePrefix;
-        }
-
-        public String getFilePrefix() {
-            return filePrefix;
         }
     }
 

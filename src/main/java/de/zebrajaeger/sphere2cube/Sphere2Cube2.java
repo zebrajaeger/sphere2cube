@@ -9,6 +9,7 @@ import java.io.IOException;
 /**
  * Single equirectangular spherical Image to multible cube images
  */
+@SuppressWarnings("Duplicates")
 public class Sphere2Cube2 {
 
     private WritableRaster sourceRaster;
@@ -94,7 +95,7 @@ public class Sphere2Cube2 {
 
         // 0 - back, 1 - left 2 - front, 3 - right, 4 - top, 5 - bottom
         for (int face = 0; face < 6; ++face) {
-            File targetFile = new File("out_" + face+ ".jpg");
+            File targetFile = new File("out_" + face + ".jpg");
             targetImage = new BufferedImage(edge, edge, BufferedImage.TYPE_INT_RGB);
             targetRaster = targetImage.getRaster();
 

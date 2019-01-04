@@ -5,12 +5,11 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 /**
  * Single equirectangular spherical Image to single cube image
  */
+@SuppressWarnings("Duplicates")
 public class Sphere2Cube1 {
 
     private WritableRaster sourceRaster;

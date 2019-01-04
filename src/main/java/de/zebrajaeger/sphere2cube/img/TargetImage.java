@@ -27,7 +27,10 @@ public class TargetImage implements ITargetImage {
     }
 
     public void save(File file) throws IOException {
-        ImageIO.write(image, "png", file);
+        if(!file.getParentFile().exists()){
+            file.getParentFile().mkdirs();
+        }
+        ImageIO.write(image, "jpg", file);
     }
     public void save(String filePath) throws IOException {
         save(new File(filePath));

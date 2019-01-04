@@ -1,0 +1,48 @@
+package de.zebrajaeger.sphere2cube.result;
+
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import java.util.List;
+
+/**
+ * @author Lars Brandt, Silpion IT Solutions GmbH
+ */
+public class RenderedPano {
+    private Type type = Type.CUBIC;
+    private int tileSize = 512;
+    private View view;
+    private List<Level> levels;
+
+    public RenderedPano(Type type, int tileSize, View view, List<Level> levels) {
+        this.type = type;
+        this.tileSize = tileSize;
+        this.view = view;
+        this.levels = levels;
+    }
+
+    public boolean isMultires() {
+        return levels.size() > 1;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public int getTileSize() {
+        return tileSize;
+    }
+
+    public List<Level> getLevels() {
+        return levels;
+    }
+
+    public enum Type {
+        CUBIC
+    }
+
+    @Override
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.MULTI_LINE_STYLE);
+    }
+}

@@ -30,8 +30,8 @@ public class Sphere2Cube3 {
     private ITargetImage target;
 
     public static void main(String[] args) throws IOException {
-        //new Sphere2Cube3().process(new File("samples/buckingham(1024 x512).jpg"));
-        //new Sphere2Cube3().process(new File("samples/pano2(10000x5000).jpg"));
+        //new Sphere2Cube3().renderPano(new File("samples/buckingham(1024 x512).jpg"));
+        //new Sphere2Cube3().renderPano(new File("samples/pano2(10000x5000).jpg"));
         new Sphere2Cube3().process(new File("samples/pano2(10000x5000).jpg"));
     }
 

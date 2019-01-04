@@ -4,11 +4,18 @@ import de.zebrajaeger.sphere2cube.img.ISourceImage;
 import de.zebrajaeger.sphere2cube.img.ITargetImage;
 import de.zebrajaeger.sphere2cube.img.SourceImage;
 import de.zebrajaeger.sphere2cube.img.TargetImage;
+import de.zebrajaeger.sphere2cube.result.Level;
+import de.zebrajaeger.sphere2cube.result.RenderedPano;
+import de.zebrajaeger.sphere2cube.result.View;
 import de.zebrajaeger.sphere2cube.tile.KrPanoTileNameGenerator;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Single equirectangular spherical Image to multible cube images
@@ -34,50 +41,65 @@ public class Sphere2Cube4 {
     private ITargetImage target;
 
     public static void main(String[] args) throws IOException {
-        new Sphere2Cube4("target/tiles/%s_l%l_%y_%x.jpg").process(new File("samples/buckingham.jpg"));
-        //new Sphere2Cube4().process(new File("samples/pano2(10000x5000).jpg"));
-        //new Sphere2Cube4().process(new File("samples/pano2(10000x5000).jpg"));
+        Sphere2Cube4 s2c = new Sphere2Cube4("target/tiles/%s/%l/l%l_%y_%x.jpg");
+
+        //s2c.renderPano(new File("samples/buckingham.jpg"), 512);
+        s2c.renderPano(new File("samples/raster(5000x2500).png"), 512);
+
+        //new Sphere2Cube4().renderPano(new File("samples/pano2(10000x5000).jpg"));
+        //new Sphere2Cube4().renderPano(new File("samples/pano2(10000x5000).jpg"));
     }
 
     public Sphere2Cube4(String tilePattern) {
         tileNameGenerator = KrPanoTileNameGenerator.of(tilePattern);
     }
 
-    public void process(File sourceFile) throws IOException {
-        source = SourceImage.of(sourceFile).fov(180d, 0d, 90d, 0d);
+    public void renderPano(File sourceFile, int tileEdge) throws IOException {
+        RenderedPano renderedPano = renderPano(SourceImage.of(sourceFile).fov(180d, 0d, 90d, 0d), tileEdge);
+        System.out.println(renderedPano);
+    }
 
+    public RenderedPano renderPano(SourceImage sourceFile, int tileEdge) throws IOException {
+        source = sourceFile;
         inW = source.getW();
         inH = source.getH();
 
         FileUtils.deleteDirectory(new File("target/tiles"));
-        renderFaces(inW / 4, 1024, 512);
+        Map<Face, List<Level>> faceListMap = renderFaces(inW / 4, 1024, tileEdge);
+        return new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, new View(), faceListMap.get(Face.FRONT));
     }
 
-    void renderFaces(int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
+    Map<Face, List<Level>> renderFaces(int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
+        Map<Face, List<Level>> result = new HashMap<>();
         for (Face face : Face.values()) {
-            renderFace(face, srcEdge, minTargetEdge, tileEdge);
+            result.put(face, renderFace(face, srcEdge, minTargetEdge, tileEdge));
         }
+        return result;
     }
 
-    private void renderFace(Face face, int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
-        int targetEdge = srcEdge; // TODO ok??
+    private List<Level> renderFace(Face face, int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
+        List<Level> result = new LinkedList<>();
+
+        int targetEdge = srcEdge;
         int layer = 1;
         do {
-            renderLayer(face, layer, srcEdge, targetEdge, tileEdge);
+            result.add(renderLayer(face, layer, srcEdge, targetEdge, tileEdge));
             targetEdge /= 2;
             ++layer;
         } while (targetEdge > minTargetEdge);
+
+        return result;
     }
 
-    private void renderLayer(Face face, int layer, int srcEdge, int targetEdge, int tileEdge) throws IOException {
+    private Level renderLayer(Face face, int layer, int srcEdge, int targetEdge, int tileEdge) throws IOException {
         double srcEdgeD = srcEdge;
         double targetEdgeD = targetEdge;
 
         int x = 0;
+        int y = 0;
         for (int x1 = 0; x1 < targetEdge; x1 += tileEdge) {
             int x2 = Math.min(x1 + tileEdge, targetEdge);
-
-            int y = 0;
+            y = 0;
             for (int y1 = 0; y1 < targetEdge; y1 += tileEdge) {
                 int y2 = Math.min(y1 + tileEdge, targetEdge);
                 renderTile(face,
@@ -90,6 +112,8 @@ public class Sphere2Cube4 {
             }
             ++x;
         }
+
+        return new Level(layer, targetEdge, targetEdge, x, y);
     }
 
     private void renderTile(Face face, double srcEdge, double targetEdge, int x1, int x2, int y1, int y2, File targetFile) throws IOException {

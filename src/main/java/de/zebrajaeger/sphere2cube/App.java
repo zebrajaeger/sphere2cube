@@ -1,6 +1,7 @@
 package de.zebrajaeger.sphere2cube;
 
 import de.zebrajaeger.sphere2cube.converter.Sphere2Cube;
+import de.zebrajaeger.sphere2cube.img.SourceImage;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -19,10 +20,10 @@ public class App {
 
             // render pano
             Sphere2Cube s2c = new Sphere2Cube("target/pano/tiles/%s/l%l/%000y_%000x.png");
-            //s2c.renderPano(new File("samples/buckingham.jpg"), 512);
             s2c.renderPano(
-                    //new File("samples/raster(5000x2500).png"),
-                    new File("samples/pano1(5376x2688).jpg"),
+                    //SourceImage.of("samples/raster(5000x2500).png").fov(180d, 0d, 90d, 0d),
+                    //SourceImage.of("samples/pano1(5376x2688).jpg").fov(180d, 0d, 90d, 0d),
+                    SourceImage.of("samples/sylvester[S][35.60x4.95(-14.99)]_small.psd").fov(35.6, 0d, 4.95d, 0d),
                     new File("target/pano/pano.xml"),
                     new File("target/pano/index.html"),
                     512);

@@ -7,4 +7,6 @@ public interface ISourceImage {
     void readPixel(int x, int y, double[] result);
     int getW();
     int getH();
+    int getOriginalW();
+    int getoriginalH();
 }

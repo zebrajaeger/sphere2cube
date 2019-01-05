@@ -30,6 +30,12 @@ public class SourceImage implements ISourceImage {
     private int maxY;
 
     private double[] outBoundColor = new double[]{0f, 0f, 0f, 0f};
+    private double iW;
+    private double iH;
+
+    public static SourceImage of(String file) throws IOException {
+        return new SourceImage().read(new File(file));
+    }
 
     public static SourceImage of(File file) throws IOException {
         return new SourceImage().read(file);
@@ -38,9 +44,13 @@ public class SourceImage implements ISourceImage {
     protected SourceImage() {
     }
 
+
     public SourceImage read(File file) throws IOException {
         this.file = file;
         image = ImageIO.read(file);
+        if (image == null) {
+            throw new IllegalArgumentException("Could not read image: '" + file.getAbsolutePath() + "'");
+        }
         raster = image.getRaster();
         w = image.getWidth();
         h = image.getHeight();
@@ -48,6 +58,8 @@ public class SourceImage implements ISourceImage {
         maxX = image.getWidth();
         minY = 0;
         maxY = image.getHeight();
+        iW = image.getWidth();
+        iH = image.getHeight();
         return this;
     }
 
@@ -55,9 +67,6 @@ public class SourceImage implements ISourceImage {
         if (fovX == null && fovY == null) {
             throw new RuntimeException("at least fovX or fovY must be set");
         }
-
-        double iW = image.getWidth();
-        double iH = image.getHeight();
 
         if (fovY != null) {
             this.fovY = fovY;
@@ -110,6 +119,16 @@ public class SourceImage implements ISourceImage {
 
     public int getH() {
         return h;
+    }
+
+    @Override
+    public int getOriginalW() {
+        return (int) iW;
+    }
+
+    @Override
+    public int getoriginalH() {
+        return (int) iH;
     }
 
     @Override

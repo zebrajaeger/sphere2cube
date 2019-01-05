@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.httpserver;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,11 +16,16 @@ import java.net.URLConnection;
 
 public class StaticWebServer {
     private File serverRoot;
+    private File darkImage;
+
     private int port = 80;
     private HttpServer httpsServer;
 
     public static StaticWebServer of(File serverRoot) {
         return new StaticWebServer(serverRoot);
+    }
+    public static StaticWebServer of(String serverRoot) {
+        return new StaticWebServer(new File(serverRoot));
     }
 
     private StaticWebServer(File serverRoot) {
@@ -32,6 +37,15 @@ public class StaticWebServer {
         httpsServer.createContext("/", new MyHandler());
         httpsServer.start();
         return this;
+    }
+
+    public StaticWebServer darkImage(File darkImage) {
+        this.darkImage = darkImage;
+        return this;
+    }
+
+    public StaticWebServer darkImage(String darkImage) {
+        return darkImage(new File(darkImage));
     }
 
     public StaticWebServer stop() {
@@ -65,14 +79,7 @@ public class StaticWebServer {
             if (!file.exists()) {
                 handle404(httpExchange);
             } else {
-                String mime = URLConnection.guessContentTypeFromName(file.getName());
-                if (mime != null) {
-                    httpExchange.getResponseHeaders().set("Content-Type", mime);
-                }
-                httpExchange.sendResponseHeaders(200, file.length());
-                try (OutputStream os = httpExchange.getResponseBody()) {
-                    FileUtils.copyFile(file, os);
-                }
+                sendFile(httpExchange, file);
             }
         }
 
@@ -92,8 +99,23 @@ public class StaticWebServer {
                     handleFile(httpExchange, source);
                 }
             } else {
-                handle404(httpExchange);
+                if (path.endsWith(".png") && darkImage != null) {
+                    sendFile(httpExchange, darkImage);
+                } else {
+                    handle404(httpExchange);
+                }
             }
+        }
+    }
+
+    private void sendFile(HttpExchange httpExchange, File file) throws IOException {
+        String mime = URLConnection.guessContentTypeFromName(file.getName());
+        if (mime != null) {
+            httpExchange.getResponseHeaders().set("Content-Type", mime);
+        }
+        httpExchange.sendResponseHeaders(200, file.length());
+        try (OutputStream os = httpExchange.getResponseBody()) {
+            FileUtils.copyFile(file, os);
         }
     }
 }

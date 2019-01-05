@@ -44,7 +44,6 @@ public class SourceImage implements ISourceImage {
     protected SourceImage() {
     }
 
-
     public SourceImage read(File file) throws IOException {
         this.file = file;
         image = ImageIO.read(file);
@@ -94,22 +93,24 @@ public class SourceImage implements ISourceImage {
             this.offX = 0d;
         }
 
-        int oX = (int) (iW * this.offX / 360d);
+        int oX = (int) (w * this.offX / 360d);
         this.minX = ((this.w - image.getWidth()) / 2) + oX;
         this.maxX = minX + image.getWidth();
 
-        int oY = (int) (iH * this.offY / 180d);
+        int oY = (int) (h * this.offY / 180d);
         this.minY = ((this.h - image.getHeight()) / 2) + oY;
         this.maxY = minY + image.getHeight();
 
         return this;
     }
 
-    public void readPixel(int x, int y, double[] result) {
+    public boolean readPixel(int x, int y, double[] result) {
         if (x >= this.minX && x < this.maxX && y >= this.minY && y < this.maxY) {
             raster.getPixel(x - minX, y - minY, result);
+            return true;
         } else {
             System.arraycopy(outBoundColor, 0, result, 0, result.length);
+            return false;
         }
     }
 
@@ -127,7 +128,7 @@ public class SourceImage implements ISourceImage {
     }
 
     @Override
-    public int getoriginalH() {
+    public int getOriginalH() {
         return (int) iH;
     }
 

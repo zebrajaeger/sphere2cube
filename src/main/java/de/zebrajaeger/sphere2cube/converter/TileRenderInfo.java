@@ -5,6 +5,9 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import java.io.File;
 
 public class TileRenderInfo {
+    private boolean renderTileIfNotInSource = false;
+    private boolean preCheck = false;
+
     private Face face;
 
     private int sourceEdge;
@@ -34,6 +37,11 @@ public class TileRenderInfo {
         return new TileRenderInfo();
     }
 
+    public TileRenderInfo renderTileIfNotInSource(boolean renderTileIfNotInSource) {
+        this.renderTileIfNotInSource = renderTileIfNotInSource;
+        return this;
+    }
+
     public TileRenderInfo tilePosition(Face face, int tileIndexX, int tileIndexY) {
         this.face = face;
         this.tileIndexX = tileIndexX;
@@ -46,8 +54,8 @@ public class TileRenderInfo {
         this.x2 = x2;
         this.y1 = y1;
         this.y2 = y2;
-        this.tileEdgeX = Math.abs(x2-x1);
-        this.tileEdgeY = Math.abs(y2-y1);
+        this.tileEdgeX = Math.abs(x2 - x1);
+        this.tileEdgeY = Math.abs(y2 - y1);
         return this;
     }
 
@@ -76,6 +84,11 @@ public class TileRenderInfo {
         return this;
     }
 
+    public TileRenderInfo preCheck(boolean preCheck) {
+        this.preCheck = preCheck;
+        return this;
+    }
+
     public int getTileCountX() {
         return tileIndexX + 1;
     }
@@ -98,6 +111,10 @@ public class TileRenderInfo {
 
     public boolean isRightTile() {
         return tileIndexX == tileSizeX - 1;
+    }
+
+    public boolean isRenderTileIfNotInSource() {
+        return renderTileIfNotInSource;
     }
 
     public int getTileEdgeX() {
@@ -174,6 +191,10 @@ public class TileRenderInfo {
 
     public boolean isMirrorY() {
         return mirrorY;
+    }
+
+    public boolean isPreCheck() {
+        return preCheck;
     }
 
     @Override

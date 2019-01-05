@@ -40,7 +40,7 @@ public class Sphere2Cube {
 
     public void renderPano(ISourceImage source, File panoXmlFile, File indexHtmlFile, int tileEdge) throws IOException {
 
-        LOG.info("Pano {} x {} -> {} x {}", source.getOriginalW(), source.getoriginalH(), source.getW(), source.getH());
+        LOG.info("Pano {} x {} -> {} x {}", source.getOriginalW(), source.getOriginalH(), source.getW(), source.getH());
         long startTime = System.currentTimeMillis();
 
         // thread pool
@@ -97,6 +97,12 @@ public class Sphere2Cube {
     private Level renderLayer(ExecutorService executor, ISourceImage source, Face face, int layer, int sourceEdge, int targetEdge, int tileEdge) {
         LOG.info("    Render Layer: " + layer);
 
+        double r = (double) targetEdge / (double) sourceEdge; // scale of target
+        double oX = (double) source.getOriginalH() * r;
+        double oY = (double) source.getOriginalW() * r;
+        double oL = Math.min(oX, oY);
+        boolean precheck = (oL > tileEdge);
+
         int x = 0;
         int y = 0;
         int count = (targetEdge / tileEdge) + ((targetEdge % tileEdge != 0) ? 1 : 0);
@@ -108,6 +114,8 @@ public class Sphere2Cube {
                 int y2 = Math.min(y1 + tileEdge, targetEdge);
 
                 TileRenderInfo trf = TileRenderInfo.of()
+                        .renderTileIfNotInSource(false)
+                        .preCheck(precheck)
                         .tilePosition(face, x, y)
                         .tileSection(x1, x2, y1, y2)
                         .mirror(false, face == Face.TOP)

@@ -19,6 +19,8 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
     private static final Logger LOG = LoggerFactory.getLogger(TileRenderJob.class);
 
     private boolean tileDebug;
+    private boolean tileDebugOverwriteContent = false;
+
     private TileRenderInfo trf;
     private ISourceImage source;
 
@@ -29,7 +31,6 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
     private double[] p2 = new double[3];
     private double[] p3 = new double[3];
     private double[] p4 = new double[3];
-    private double[] pt = new double[3];
 
     public static TileRenderJob of(boolean tileDebug, TileRenderInfo trf, ISourceImage source) {
         return new TileRenderJob(tileDebug, trf, source);
@@ -52,31 +53,57 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
         inH = source.getH();
     }
 
+    private boolean isTileWithinSource(boolean invertX, boolean invertY) {
+        double[] result = new double[3];
+        int x1 = trf.getX1();
+        int y1 = trf.getY1();
+        int x2 = trf.getX2() - 1;
+        int y2 = trf.getY2() - 1;
+        Face face = trf.getFace();
+        int sourceEdge = trf.getSourceEdge();
+        double targetEdge = trf.getTargetEdge();
+        return copyPixel(invertX, invertY, x1, y1, face, sourceEdge, targetEdge, result)
+                | copyPixel(invertX, invertY, x2, y1, face, sourceEdge, targetEdge, result)
+                | copyPixel(invertX, invertY, x1, trf.getY2() - 1, face, sourceEdge, targetEdge, result)
+                | copyPixel(invertX, invertY, x2, y2, face, sourceEdge, targetEdge, result);
+    }
+
     @Override
     public TileRenderInfo call() throws Exception {
         long timestamp = System.currentTimeMillis();
 
-        Face face = trf.getFace();
-        double sourceEdge = trf.getSourcEdge();
-        double targetEdge = trf.getTargetEdge();
         boolean invertX = false;
         boolean invertY = trf.getFace() == Face.TOP;
 
-        ITargetImage target = TargetImage.of(trf.getTileEdgeX(), trf.getTileEdgeY());
-        for (int x = trf.getX1(), xt = 0; x < trf.getX2(); ++x, ++xt) {
-            for (int y = trf.getY1(), yt = 0; y < trf.getY2(); ++y, ++yt) {
-                double[] value = copyPixel(invertX, invertY, x, y, face, sourceEdge, targetEdge);
-                target.writePixel(xt, yt, value);
+        // render if precheck allowed and precheck match or n precheck
+        if (!trf.isPreCheck() || isTileWithinSource(invertX, invertY)) {
+
+            Face face = trf.getFace();
+            double sourceEdge = trf.getSourcEdge();
+            double targetEdge = trf.getTargetEdge();
+
+            double[] result = new double[3];
+            boolean withinSource = false;
+            ITargetImage target = TargetImage.of(trf.getTileEdgeX(), trf.getTileEdgeY());
+            for (int x = trf.getX1(), xt = 0; x < trf.getX2(); ++x, ++xt) {
+                for (int y = trf.getY1(), yt = 0; y < trf.getY2(); ++y, ++yt) {
+                    withinSource |= copyPixel(invertX, invertY, x, y, face, sourceEdge, targetEdge, result);
+                    target.writePixel(xt, yt, result);
+                }
             }
+
+            if (trf.isRenderTileIfNotInSource() | withinSource) {
+                if (tileDebug) {
+                    renderDebugInfo(target, trf);
+                }
+                target.save(trf.getTargetFile());
+                LOG.info("       Rendered: '{}' in {}ms ", trf.getTargetFile().getAbsolutePath(), System.currentTimeMillis() - timestamp);
+            } else {
+                LOG.debug("        Not in source: '{}' in {}ms ", trf.getTargetFile().getAbsolutePath(), System.currentTimeMillis() - timestamp);
+            }
+        }else{
+            LOG.debug("        Precheck rejection: '{}' in {}ms ", trf.getTargetFile().getAbsolutePath(), System.currentTimeMillis() - timestamp);
         }
-
-        if (tileDebug) {
-            renderDebugInfo(target, trf);
-        }
-        target.save(trf.getTargetFile());
-
-        LOG.info("Rendered: '{}' in {}ms ", trf.getTargetFile().getAbsolutePath(), System.currentTimeMillis() -  timestamp);
-
         return trf;
     }
 
@@ -90,11 +117,11 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
         return value;
     }
 
-    private void readPixel(int x, int y, double[] result) {
-        source.readPixel(x % inW, clip(y, inH - 1), result);
+    private boolean readPixel(int x, int y, double[] result) {
+        return source.readPixel(x % inW, clip(y, inH - 1), result);
     }
 
-    private double[] copyPixel(boolean invertX, boolean invertY, int i, int j, Face face, double sourceEdge, double targetEdge) {
+    private boolean copyPixel(boolean invertX, boolean invertY, int i, int j, Face face, double sourceEdge, double targetEdge, double[] result) {
         double a = 2d * (double) i / targetEdge;
         if (invertX) {
             a = 2d - a;
@@ -157,26 +184,26 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
         double nu = vf - (double) vi;
 
         // Pixel values of four corners
-        readPixel(ui, vi, p1);
-        readPixel(u2, vi, p2);
-        readPixel(ui, v2, p3);
-        readPixel(u2, v2, p4);
+        boolean insidePano = readPixel(ui, vi, p1);
+        insidePano |= readPixel(u2, vi, p2);
+        insidePano |= readPixel(ui, v2, p3);
+        insidePano |= readPixel(u2, v2, p4);
 
         // interpolate
-        pt[0] = p1[0] * (1d - mu) * (1d - nu)
+        result[0] = p1[0] * (1d - mu) * (1d - nu)
                 + p2[0] * (mu) * (1d - nu)
                 + p3[0] * (1d - mu) * nu
                 + p4[0] * mu * nu;
-        pt[1] = p1[1] * (1d - mu) * (1d - nu)
+        result[1] = p1[1] * (1d - mu) * (1d - nu)
                 + p2[1] * (mu) * (1d - nu)
                 + p3[1] * (1d - mu) * nu
                 + p4[1] * mu * nu;
-        pt[2] = p1[2] * (1d - mu) * (1d - nu)
+        result[2] = p1[2] * (1d - mu) * (1d - nu)
                 + p2[2] * (mu) * (1d - nu)
                 + p3[2] * (1d - mu) * nu
                 + p4[2] * mu * nu;
 
-        return pt;
+        return insidePano;
     }
 
     private void renderDebugInfo(ITargetImage target, TileRenderInfo trf) {
@@ -220,8 +247,10 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
         }
 
         // overwrite Content
-        //g.setColor(backgroundColor);
-        //g.fillRect(0, 0, trf.getTileEdgeX(), trf.getTileEdgeY());
+        if (tileDebugOverwriteContent) {
+            g.setColor(backgroundColor);
+            g.fillRect(0, 0, trf.getTileEdgeX(), trf.getTileEdgeY());
+        }
 
         g.setColor(borderColor);
         g.setStroke(trf.isTopTile() ? borderStroke : originalStroke);

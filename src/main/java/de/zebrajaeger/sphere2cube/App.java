@@ -14,8 +14,8 @@ public class App {
             FileUtils.deleteDirectory(new File("target/pano"));
 
             // copy assets
-            FileUtils.copyDirectory(new File("samples/skin"), new File("target/pano/skin"));
-            FileUtils.copyFile(new File("samples/krpano.js"), new File("target/pano/krpano.js"));
+            FileUtils.copyDirectory(new File("assets/skin"), new File("target/pano/skin"));
+            FileUtils.copyFile(new File("assets/krpano.js"), new File("target/pano/krpano.js"));
 
             // render pano
             Sphere2Cube s2c = new Sphere2Cube("target/pano/tiles/%s/l%l/%000y_%000x.png");

@@ -26,8 +26,7 @@ public class TileRenderInfo {
     private int y2;
 
     private boolean mirrorX = false;
-    private boolean mirrorY;
-    private boolean mirrory = false;
+    private boolean mirrorY = false;
 
     private File targetFile;
 
@@ -83,14 +82,6 @@ public class TileRenderInfo {
 
     public int getTileCountY() {
         return tileIndexY + 1;
-    }
-
-    public boolean isMirrorX() {
-        return x1 > x2;
-    }
-
-    public boolean isMirrorY() {
-        return y1 > y2;
     }
 
     public boolean isTopTile() {
@@ -175,6 +166,14 @@ public class TileRenderInfo {
 
     public int getTileEdgeYmax() {
         return tileEdgeYmax;
+    }
+
+    public boolean isMirrorX() {
+        return mirrorX;
+    }
+
+    public boolean isMirrorY() {
+        return mirrorY;
     }
 
     @Override

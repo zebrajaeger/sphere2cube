@@ -21,7 +21,8 @@ public class App {
             Sphere2Cube s2c = new Sphere2Cube("target/pano/tiles/%s/l%l/%000y_%000x.png");
             //s2c.renderPano(new File("samples/buckingham.jpg"), 512);
             s2c.renderPano(
-                    new File("samples/raster(5000x2500).png"),
+                    //new File("samples/raster(5000x2500).png"),
+                    new File("samples/pano1(5376x2688).jpg"),
                     new File("target/pano/pano.xml"),
                     new File("target/pano/index.html"),
                     512);

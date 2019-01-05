@@ -51,7 +51,6 @@ public class Sphere2Cube {
     private double[] p3 = new double[3];
     private double[] p4 = new double[3];
     private double[] pt = new double[3];
-    private Xyz xyz = new Xyz();
     private ISourceImage source;
 
     public Sphere2Cube(String tilePattern) {
@@ -85,14 +84,14 @@ public class Sphere2Cube {
         return result;
     }
 
-    private List<Level> renderFace(Face face, int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
+    private List<Level> renderFace(Face face, int sourceEdge, int minTargetEdge, int tileEdge) throws IOException {
         List<Level> result = new LinkedList<>();
 
         LOG.info("Render Face: " + face);
-        int targetEdge = srcEdge;
+        int targetEdge = sourceEdge;
         int layer = 1;
         do {
-            result.add(renderLayer(face, layer, srcEdge, targetEdge, tileEdge));
+            result.add(renderLayer(face, layer, sourceEdge, targetEdge, tileEdge));
             targetEdge /= 2;
             ++layer;
         } while (targetEdge > minTargetEdge);
@@ -100,7 +99,7 @@ public class Sphere2Cube {
         return result;
     }
 
-    private Level renderLayer(Face face, int layer, int srcEdge, int targetEdge, int tileEdge) throws IOException {
+    private Level renderLayer(Face face, int layer, int sourceEdge, int targetEdge, int tileEdge) throws IOException {
         LOG.info("    Render Layer: " + layer);
 
         int x = 0;
@@ -117,9 +116,9 @@ public class Sphere2Cube {
                         TileRenderInfo.of()
                                 .tilePosition(face, x, y)
                                 .tileSection(x1, x2, y1, y2)
-                                .mirror(false, false)
+                                .mirror(false, face == Face.TOP)
                                 .tilesInFace(count, count)
-                                .edgeSizes(srcEdge, targetEdge, tileEdge, tileEdge)
+                                .edgeSizes(sourceEdge, targetEdge, tileEdge, tileEdge)
                                 .targetFile(new File(tileNameGenerator.generateName(face, layer, count, x + 1, count, y + 1)))
                 );
 
@@ -206,13 +205,15 @@ public class Sphere2Cube {
 
     private void renderTile(TileRenderInfo trf) throws IOException {
         Face face = trf.getFace();
-        double sourcEdge = trf.getSourcEdge();
+        double sourceEdge = trf.getSourcEdge();
         double targetEdge = trf.getTargetEdge();
+        boolean invertX = false;
+        boolean invertY = trf.getFace()==Face.TOP;
 
         ITargetImage target = TargetImage.of(trf.getTileEdgeX(), trf.getTileEdgeY());
         for (int x = trf.getX1(), xt = 0; x < trf.getX2(); ++x, ++xt) {
             for (int y = trf.getY1(), yt = 0; y < trf.getY2(); ++y, ++yt) {
-                double[] value = copyPixel(x, y, face, sourcEdge, targetEdge);
+                double[] value = copyPixel(invertX, invertY, x, y, face, sourceEdge, targetEdge);
                 target.writePixel(xt, yt, value);
             }
         }
@@ -237,15 +238,59 @@ public class Sphere2Cube {
         source.readPixel(x % inW, clip(y, inH - 1), result);
     }
 
-    private double[] copyPixel(int i, int j, Face face, double srcEdge, double targetEdge) {
-        outImgToXYZ(xyz, i, j, face, targetEdge);
-        double theta = Math.atan2(xyz.y, xyz.x);
-        double r = Math.hypot(xyz.x, xyz.y);
-        double phi = Math.atan2(xyz.z, r);
+    private double[] copyPixel(boolean invertX, boolean invertY, int i, int j, Face face, double sourceEdge, double targetEdge) {
+        double a = 2d * (double) i / targetEdge;
+        if (invertX) {
+            a = 2d-a;
+        }
+        double b = 2d * (double) j / targetEdge;
+        if (invertY) {
+            b = 2d-b;
+        }
+        double x, y, z;
+        switch (face) {
+            case BACK:
+                x = -1d;
+                y = 1d - a;
+                z = 1d - b;
+                break;
+            case LEFT:
+                x = a - 1d;
+                y = -1d;
+                z = 1d - b;
+                break;
+            case FRONT:
+                x = 1d;
+                y = a - 1d;
+                z = 1d - b;
+                break;
+            case RIGHT:
+                x = 1d - a;
+                y = 1d;
+                z = 1d - b;
+                break;
+            case TOP:
+                x = 1d - b;
+                y = a - 1d;
+                z = 1d;
+                break;
+            case BOTTOM:
+                x = 1d - b;
+                y = a - 1d;
+                z = -1d;
+                break;
+            default:
+                throw new RuntimeException("Unknown face:" + face);
+        }
+
+        //outImgToXYZ(xyz, i, j, face, targetEdge);
+        double theta = Math.atan2(y, x);
+        double r = Math.hypot(x, y);
+        double phi = Math.atan2(z, r);
 
         // source img coords
-        double uf = (2d * srcEdge * (theta + PI) / PI);
-        double vf = (2D * srcEdge * (PI / 2d - phi) / PI);
+        double uf = (2d * sourceEdge * (theta + PI) / PI);
+        double vf = (2D * sourceEdge * (PI / 2d - phi) / PI);
 
         // Use bilinear interpolation between the four surrounding pixels
         int ui = (int) Math.floor(uf);  // coord of pixel to bottom left
@@ -278,41 +323,41 @@ public class Sphere2Cube {
         return pt;
     }
 
-    private void outImgToXYZ(Xyz xyz, int i, int j, Face face, double edge) {
-        double a = 2d * (double) i / edge;
-        double b = 2d * (double) j / edge;
-
-        switch (face) {
-            case BACK:
-                xyz.set(-1d, 1d - a, 1d - b);
-                break;
-            case LEFT:
-                xyz.set(a - 1d, -1d, 1d - b);
-                break;
-            case FRONT:
-                xyz.set(1d, a - 1d, 1d - b);
-                break;
-            case RIGHT:
-                xyz.set(1d - a, 1d, 1d - b);
-                break;
-            case TOP:
-                xyz.set(1d - b, a - 1d, 1d);
-                break;
-            case BOTTOM:
-                xyz.set(1d - b, a - 1d, -1d);
-                break;
-        }
-    }
-
-    private class Xyz {
-        double x;
-        double y;
-        double z;
-
-        void set(double x, double y, double z) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-    }
+//    private void outImgToXYZ(Xyz xyz, int i, int j, Face face, double edge) {
+//        double a = 2d * (double) i / edge;
+//        double b = 2d * (double) j / edge;
+//
+//        switch (face) {
+//            case BACK:
+//                xyz.set(-1d, 1d - a, 1d - b);
+//                break;
+//            case LEFT:
+//                xyz.set(a - 1d, -1d, 1d - b);
+//                break;
+//            case FRONT:
+//                xyz.set(1d, a - 1d, 1d - b);
+//                break;
+//            case RIGHT:
+//                xyz.set(1d - a, 1d, 1d - b);
+//                break;
+//            case TOP:
+//                xyz.set(1d - b, a - 1d, 1d);
+//                break;
+//            case BOTTOM:
+//                xyz.set(1d - b, a - 1d, -1d);
+//                break;
+//        }
+//    }
+//
+//    private class Xyz {
+//        double x;
+//        double y;
+//        double z;
+//
+//        void set(double x, double y, double z) {
+//            this.x = x;
+//            this.y = y;
+//            this.z = z;
+//        }
+//    }
 }

@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.converter;
 
 /**
  * @author Lars Brandt, Silpion IT Solutions GmbH

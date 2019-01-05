@@ -1,4 +1,4 @@
-<krpano>
+<krpano showerrors="{{ pano.showerrors }}">
 
     <!-- the skin -->
     <include url="skin/defaultskin.xml" />
@@ -12,7 +12,7 @@
     <image type="{{ pano.type.label }}" multires="{{ pano.multires }}" tilesize="{{ pano.tileSize }}">
         {% for level in pano.levels %}
         <level tiledimagewidth="{{ level.w }}" tiledimageheight="{{ level.h }}">
-            <cube url="tiles/%s/l{{ level.index }}/l{{ level.index }}_%s_%v_%h.jpg" />
+            <cube url="tiles/%s/l{{ level.index }}/%000v_%000h.png" />
         </level>
         {% endfor %}
     </image>

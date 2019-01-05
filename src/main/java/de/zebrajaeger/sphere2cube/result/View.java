@@ -7,11 +7,43 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  * @author Lars Brandt, Silpion IT Solutions GmbH
  */
 public class View {
-    private double hlookat=0d;
-    private double vlookat=0d;
-    private double maxpixelzoom=1d;
-    private double fovmax=150d;
+    private double hlookat = 0d;
+    private double vlookat = 0d;
+    private double maxpixelzoom = 1d;
+    private double fovmax = 150d;
     private Limitview limitview = Limitview.AUTO;
+
+    public static View of() {
+        return new View();
+    }
+
+    public View hlookat(double hlookat) {
+        this.hlookat = hlookat;
+        return this;
+    }
+
+    public View vlookat(double vlookat) {
+        this.vlookat = hlookat;
+        return this;
+    }
+
+    public View maxpixelzoom(double maxpixelzoom) {
+        this.maxpixelzoom = maxpixelzoom;
+        return this;
+    }
+
+    public View fovmax(double fovmax) {
+        this.fovmax = fovmax;
+        return this;
+    }
+
+    public View limitview(Limitview limitview) {
+        this.limitview = limitview;
+        return this;
+    }
+
+    private View() {
+    }
 
     public double getHlookat() {
         return hlookat;

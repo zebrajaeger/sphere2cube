@@ -1,10 +1,8 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.converter.old;
 
-import de.zebrajaeger.sphere2cube.img.ISourceImage;
-import de.zebrajaeger.sphere2cube.img.ITargetImage;
-import de.zebrajaeger.sphere2cube.img.SourceImage;
-import de.zebrajaeger.sphere2cube.img.TargetImage;
-
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 
@@ -12,10 +10,15 @@ import java.io.IOException;
  * Single equirectangular spherical Image to multible cube images
  */
 @SuppressWarnings("Duplicates")
-public class Sphere2Cube3 {
+public class Sphere2Cube2 {
 
+    private WritableRaster sourceRaster;
+    private BufferedImage source;
+    private BufferedImage targetImage;
+    private WritableRaster targetRaster;
     private int inW;
     private int inH;
+    private int edge;
 
     // helpers
     private static final double PI = Math.PI;
@@ -26,37 +29,53 @@ public class Sphere2Cube3 {
     private double[] p3 = new double[3];
     private double[] p4 = new double[3];
     private double[] pt = new double[3];
-    private ISourceImage source;
-    private ITargetImage target;
 
     public static void main(String[] args) throws IOException {
-        //new Sphere2Cube3().renderPano(new File("samples/buckingham(1024 x512).jpg"));
-        //new Sphere2Cube3().renderPano(new File("samples/pano2(10000x5000).jpg"));
-        new Sphere2Cube3().process(new File("samples/pano2(10000x5000).jpg"));
+        new Sphere2Cube2().process(new File("samples/buckingham.jpg"));
     }
 
-    private void outImgToXYZ(Xyz xyz, int i, int j, int face, double edge) {
-        double a = 2d * (double) i / edge;
-        double b = 2d * (double) j / edge;
+    private void outImgToXYZ(Xyz xyz, int i, int j, int face, int edge) {
+        double edgeF = edge;
+
+        double a = 2d * (double) i / edgeF;
+        double b = 2d * (double) j / edgeF;
 
         switch (face) {
             case 0:
-                xyz.set(-1d, 1d - a, 1d - b); // back
+                // back
+                xyz.x = -1d;
+                xyz.y = 1d - a;
+                xyz.z = 1d - b;
                 break;
             case 1:
-                xyz.set(a - 1d, -1d, 1d - b);// left
+                // left
+                xyz.x = a - 1d;
+                xyz.y = -1d;
+                xyz.z = 1d - b;
                 break;
             case 2:
-                xyz.set(1d, a - 1d, 1d - b);// front
+                // front
+                xyz.x = 1d;
+                xyz.y = a - 1d;
+                xyz.z = 1d - b;
                 break;
             case 3:
-                xyz.set(1d - a, 1d, 1d - b);// right
+                // right
+                xyz.x = 1d - a;
+                xyz.y = 1d;
+                xyz.z = 1d - b;
                 break;
             case 4:
-                xyz.set(1d - b, a - 1d, 1d);// top
+                // top
+                xyz.x = b - 1d;
+                xyz.y = a - 1d;
+                xyz.z = 1d;
                 break;
             case 5:
-                xyz.set(1d - b, a - 1d, -1d); // bottom
+                // bottom
+                xyz.x = 1d - b;
+                xyz.y = a - 1d;
+                xyz.z = -1d;
                 break;
             default:
                 throw new RuntimeException("WTF!!!!???");
@@ -64,27 +83,29 @@ public class Sphere2Cube3 {
     }
 
     public void process(File sourceFile) throws IOException {
-        source = SourceImage.of(sourceFile);
 
-        inW = source.getW();
-        inH = source.getH();
-        double srcEdge = inW / 4;
-        double targetEdge = 1000d;
-        int targetEdgeI = (int) targetEdge;
+        source = ImageIO.read(sourceFile);
+        sourceRaster = source.getRaster();
+
+        inW = source.getWidth();
+        inH = source.getHeight();
+        edge = inW / 4;
 
         Xyz xyz = new Xyz();
 
         // 0 - back, 1 - left 2 - front, 3 - right, 4 - top, 5 - bottom
         for (int face = 0; face < 6; ++face) {
-            target = TargetImage.of(targetEdgeI, targetEdgeI);
+            File targetFile = new File("out_" + face + ".jpg");
+            targetImage = new BufferedImage(edge, edge, BufferedImage.TYPE_INT_RGB);
+            targetRaster = targetImage.getRaster();
 
-            for (int i = 0; i < targetEdgeI; ++i) {
-                for (int j = 0; j < targetEdgeI; ++j) {
-                    copyPixel(xyz, i, j, face, srcEdge, targetEdge);
+            for (int i = 0; i < edge; ++i) {
+                for (int j = 0; j < edge; ++j) {
+                    copyPixel(xyz, i, j, face);
                 }
-            }
 
-            target.save(new File("target/out_" + face + ".png"));
+            }
+            ImageIO.write(targetImage, "jpg", targetFile);
         }
     }
 
@@ -99,22 +120,22 @@ public class Sphere2Cube3 {
     }
 
     private void readPixel(int x, int y, double[] result) {
-        source.readPixel(x % inW, clip(y, 0, inH - 1), result);
+        sourceRaster.getPixel(x % inW, clip(y, 0, inH - 1), result);
     }
 
     private void writePixel(int x, int y, double[] value) {
-        target.writePixel(x, y, value);
+        targetRaster.setPixel(x, y, value);
     }
 
-    private void copyPixel(Xyz xyz, int i, int j, int face, double srcEdge, double targetEdge) {
-        outImgToXYZ(xyz, i, j, face, targetEdge);
+    private void copyPixel(Xyz xyz, int i, int j, int face2) {
+        outImgToXYZ(xyz, i, j, face2, edge);
         double theta = Math.atan2(xyz.y, xyz.x);
         double r = Math.hypot(xyz.x, xyz.y);
         double phi = Math.atan2(xyz.z, r);
 
         // source img coords
-        double uf = (2d * srcEdge * (theta + PI) / PI);
-        double vf = (2D * srcEdge * (PI / 2d - phi) / PI);
+        double uf = (2d * edge * (theta + PI) / PI);
+        double vf = (2D * edge * (PI / 2d - phi) / PI);
 
         // Use bilinear interpolation between the four surrounding pixels
         int ui = (int) Math.floor(uf);  // coord of pixel to bottom left
@@ -151,11 +172,5 @@ public class Sphere2Cube3 {
         double x;
         double y;
         double z;
-
-        public void set(double x, double y, double z) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
     }
 }

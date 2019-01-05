@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  */
 public class IndexHtml {
     private String title;
-    private String panoJs = "pano.js";
+    private String panoJs = "krpano.js";
     private String panoXml = "pano.xml";
 
     public IndexHtml(String title) {

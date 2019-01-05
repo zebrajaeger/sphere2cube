@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.converter;
 
 import de.zebrajaeger.sphere2cube.img.ISourceImage;
 import de.zebrajaeger.sphere2cube.img.ITargetImage;
@@ -10,9 +10,16 @@ import de.zebrajaeger.sphere2cube.panoxml.PanoXmlGenerator;
 import de.zebrajaeger.sphere2cube.result.Level;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
 import de.zebrajaeger.sphere2cube.result.View;
-import de.zebrajaeger.sphere2cube.tile.KrPanoTileNameGenerator;
+import de.zebrajaeger.sphere2cube.tilenamegenerator.KrPanoTileNameGenerator;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +32,11 @@ import java.util.Map;
  * Single equirectangular spherical Image to multible cube images
  */
 @SuppressWarnings("Duplicates")
-public class Sphere2Cube4 {
+public class Sphere2Cube {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Sphere2Cube.class);
+
+    private boolean tileDebug = true;
 
     private final KrPanoTileNameGenerator tileNameGenerator;
     private int inW;
@@ -42,29 +53,12 @@ public class Sphere2Cube4 {
     private double[] pt = new double[3];
     private Xyz xyz = new Xyz();
     private ISourceImage source;
-    private ITargetImage target;
 
-    public static void main(String[] args) throws IOException {
-        Sphere2Cube4 s2c = new Sphere2Cube4("target/pano/tiles/%s/%l/l%l_%y_%x.jpg");
-
-        //s2c.renderPano(new File("samples/buckingham.jpg"), 512);
-        FileUtils.deleteDirectory(new File("target/pano"));
-
-        s2c.renderPano(
-                new File("samples/raster(5000x2500).png"),
-                new File("target/pano/pano.xml"),
-                new File("target/pano/index.html"),
-                512);
-
-        //new Sphere2Cube4().renderPano(new File("samples/pano2(10000x5000).jpg"));
-        //new Sphere2Cube4().renderPano(new File("samples/pano2(10000x5000).jpg"));
-    }
-
-    public Sphere2Cube4(String tilePattern) {
+    public Sphere2Cube(String tilePattern) {
         tileNameGenerator = KrPanoTileNameGenerator.of(tilePattern);
     }
 
-    public void renderPano(File sourceFile, File panoXmlFile, File indexHtmlFile,int tileEdge) throws IOException {
+    public void renderPano(File sourceFile, File panoXmlFile, File indexHtmlFile, int tileEdge) throws IOException {
         RenderedPano renderedPano = renderPano(SourceImage.of(sourceFile).fov(180d, 0d, 90d, 0d), tileEdge);
 
         String panoXml = PanoXmlGenerator.of().generate(renderedPano);
@@ -80,7 +74,7 @@ public class Sphere2Cube4 {
         inH = source.getH();
 
         Map<Face, List<Level>> faceListMap = renderFaces(inW / 4, 1024, tileEdge);
-        return new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, new View(), faceListMap.get(Face.FRONT));
+        return new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, View.of().maxpixelzoom(10d), faceListMap.get(Face.FRONT));
     }
 
     Map<Face, List<Level>> renderFaces(int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
@@ -94,6 +88,7 @@ public class Sphere2Cube4 {
     private List<Level> renderFace(Face face, int srcEdge, int minTargetEdge, int tileEdge) throws IOException {
         List<Level> result = new LinkedList<>();
 
+        LOG.info("Render Face: " + face);
         int targetEdge = srcEdge;
         int layer = 1;
         do {
@@ -106,22 +101,28 @@ public class Sphere2Cube4 {
     }
 
     private Level renderLayer(Face face, int layer, int srcEdge, int targetEdge, int tileEdge) throws IOException {
-        double srcEdgeD = srcEdge;
-        double targetEdgeD = targetEdge;
+        LOG.info("    Render Layer: " + layer);
 
         int x = 0;
         int y = 0;
+        int count = (targetEdge / tileEdge) + ((targetEdge % tileEdge != 0) ? 1 : 0);
+
         for (int x1 = 0; x1 < targetEdge; x1 += tileEdge) {
             int x2 = Math.min(x1 + tileEdge, targetEdge);
             y = 0;
             for (int y1 = 0; y1 < targetEdge; y1 += tileEdge) {
                 int y2 = Math.min(y1 + tileEdge, targetEdge);
-                renderTile(face,
-                        srcEdgeD,
-                        targetEdgeD,
-                        x1, x2,
-                        y1, y2,
-                        new File(tileNameGenerator.generateName(face, layer, x, y)));
+
+                renderTile(
+                        TileRenderInfo.of()
+                                .tilePosition(face, x, y)
+                                .tileSection(x1, x2, y1, y2)
+                                .mirror(false, false)
+                                .tilesInFace(count, count)
+                                .edgeSizes(srcEdge, targetEdge, tileEdge, tileEdge)
+                                .targetFile(new File(tileNameGenerator.generateName(face, layer, count, x + 1, count, y + 1)))
+                );
+
                 ++y;
             }
             ++x;
@@ -130,15 +131,96 @@ public class Sphere2Cube4 {
         return new Level(layer, targetEdge, targetEdge, x, y);
     }
 
-    private void renderTile(Face face, double srcEdge, double targetEdge, int x1, int x2, int y1, int y2, File targetFile) throws IOException {
-        target = TargetImage.of(x2 - x1, y2 - y1);
-        for (int x = x1, xt = 0; x < x2; ++x, ++xt) {
-            for (int y = y1, yt = 0; y < y2; ++y, ++yt) {
-                double[] value = copyPixel(x, y, face, srcEdge, targetEdge);
-                writePixel(xt, yt, value);
+    private void renderDebugInfo(ITargetImage target, TileRenderInfo trf) {
+        Graphics2D g = target.getGraphics();
+
+        Color originalColor = g.getColor();
+        Stroke originalStroke = g.getStroke();
+
+        Stroke borderStroke = new BasicStroke(20.0f);
+
+        int lX = trf.getTileEdgeX() - 1;
+        int lY = trf.getTileEdgeY() - 1;
+
+        Color backgroundColor = Color.WHITE;
+        Color borderColor = Color.WHITE;
+        switch (trf.getFace()) {
+            case BACK:
+                backgroundColor = new Color(0, 50, 0);
+                borderColor = new Color(0, 200, 0);
+                break;
+            case LEFT:
+                backgroundColor = new Color(50, 50, 0);
+                borderColor = new Color(200, 200, 0);
+                break;
+            case FRONT:
+                backgroundColor = new Color(0, 50, 50);
+                borderColor = new Color(0, 200, 200);
+                break;
+            case RIGHT:
+                backgroundColor = new Color(50, 0, 50);
+                borderColor = new Color(200, 0, 200);
+                break;
+            case TOP:
+                backgroundColor = new Color(0, 0, 50);
+                borderColor = new Color(0, 0, 200);
+                break;
+            case BOTTOM:
+                backgroundColor = new Color(50, 50, 50);
+                borderColor = new Color(200, 200, 200);
+                break;
+        }
+        g.setColor(backgroundColor);
+        //g.fillRect(0, 0, trf.getTileEdgeX(), trf.getTileEdgeY());
+
+        g.setColor(borderColor);
+        g.setStroke(trf.isTopTile() ? borderStroke : originalStroke);
+        g.drawLine(0, 0, lX, 0); // top
+        g.setStroke(trf.isBottomTile() ? borderStroke : originalStroke);
+        g.drawLine(0, lY, lX, lY); // bottom
+        g.setStroke(trf.isLeftTile() ? borderStroke : originalStroke);
+        g.drawLine(0, 0, 0, lY); // left
+        g.setStroke(trf.isRightTile() ? borderStroke : originalStroke);
+        g.drawLine(lX, 0, lX, lY); // right
+        g.setStroke(originalStroke);
+
+        g.setColor(borderColor);
+        g.setFont(new Font("Verdana", Font.BOLD, 30));
+
+        // index text
+        String text = String.format("%04d x %04d", trf.getTileCountX(), trf.getTileCountY());
+        int textWidth = g.getFontMetrics().stringWidth(text);
+        int textHeight = g.getFontMetrics().getHeight();
+        int textCenterY = ((trf.getTileEdgeY() - textHeight) / 2);
+        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY - textHeight);
+
+        // size text
+        text = String.format("%04d x %04d", trf.getTileEdgeX(), trf.getTileEdgeY());
+        textWidth = g.getFontMetrics().stringWidth(text);
+        textHeight = g.getFontMetrics().getHeight();
+        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY + textHeight);
+
+        g.setColor(originalColor);
+        g.setStroke(originalStroke);
+    }
+
+    private void renderTile(TileRenderInfo trf) throws IOException {
+        Face face = trf.getFace();
+        double sourcEdge = trf.getSourcEdge();
+        double targetEdge = trf.getTargetEdge();
+
+        ITargetImage target = TargetImage.of(trf.getTileEdgeX(), trf.getTileEdgeY());
+        for (int x = trf.getX1(), xt = 0; x < trf.getX2(); ++x, ++xt) {
+            for (int y = trf.getY1(), yt = 0; y < trf.getY2(); ++y, ++yt) {
+                double[] value = copyPixel(x, y, face, sourcEdge, targetEdge);
+                target.writePixel(xt, yt, value);
             }
         }
-        target.save(targetFile);
+
+        if (tileDebug) {
+            renderDebugInfo(target, trf);
+        }
+        target.save(trf.getTargetFile());
     }
 
     private int clip(int value, int max) {
@@ -153,10 +235,6 @@ public class Sphere2Cube4 {
 
     private void readPixel(int x, int y, double[] result) {
         source.readPixel(x % inW, clip(y, inH - 1), result);
-    }
-
-    private void writePixel(int x, int y, double[] value) {
-        target.writePixel(x, y, value);
     }
 
     private double[] copyPixel(int i, int j, Face face, double srcEdge, double targetEdge) {

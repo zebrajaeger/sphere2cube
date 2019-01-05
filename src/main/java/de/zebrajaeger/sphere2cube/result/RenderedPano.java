@@ -13,6 +13,7 @@ public class RenderedPano {
     private int tileSize = 512;
     private View view;
     private List<Level> levels;
+    private boolean showerrors = true;
 
     public RenderedPano(Type type, int tileSize, View view, List<Level> levels) {
         this.type = type;
@@ -41,8 +42,12 @@ public class RenderedPano {
         return view;
     }
 
+    public boolean isShowerrors() {
+        return showerrors;
+    }
+
     public enum Type {
-        CUBIC("cubic")
+        CUBIC("CUBE")
         ;
 
         private String label;

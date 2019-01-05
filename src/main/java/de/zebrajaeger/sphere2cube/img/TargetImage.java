@@ -1,6 +1,7 @@
 package de.zebrajaeger.sphere2cube.img;
 
 import javax.imageio.ImageIO;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -14,12 +15,18 @@ public class TargetImage implements ITargetImage {
     private WritableRaster raster;
     private int w;
     private int h;
+    private Format format;
 
-    public static TargetImage of(int w, int h) {
-        return new TargetImage(w, h);
+    public static TargetImage of(Format format, int w, int h) {
+        return new TargetImage(format, w, h);
     }
 
-    protected TargetImage(int w, int h) {
+    public static TargetImage of(int w, int h) {
+        return new TargetImage(Format.PNG, w, h);
+    }
+
+    protected TargetImage(Format format, int w, int h) {
+        this.format = format;
         this.w = w;
         this.h = h;
         image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
@@ -27,13 +34,18 @@ public class TargetImage implements ITargetImage {
     }
 
     public void save(File file) throws IOException {
-        if(!file.getParentFile().exists()){
+        if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
-        ImageIO.write(image, "jpg", file);
+        ImageIO.write(image, format.getFormatName(), file);
     }
+
     public void save(String filePath) throws IOException {
         save(new File(filePath));
+    }
+
+    public Graphics2D getGraphics() {
+        return (Graphics2D) image.getGraphics();
     }
 
     @Override
@@ -50,4 +62,21 @@ public class TargetImage implements ITargetImage {
     public int getH() {
         return h;
     }
+
+    public enum Format {
+        JPG("jpg"),
+        PNG("png"),
+        ;
+
+        private String formatName;
+
+        Format(String formatName) {
+            this.formatName = formatName;
+        }
+
+        public String getFormatName() {
+            return formatName;
+        }
+    }
+
 }

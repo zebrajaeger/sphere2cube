@@ -1,5 +1,6 @@
 package de.zebrajaeger.sphere2cube.img;
 
+import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -60,6 +61,13 @@ public class SourceImage implements ISourceImage {
         iW = image.getWidth();
         iH = image.getHeight();
         return this;
+    }
+
+    public SourceImage fov(ViewCalculator.PanoView panoView) {
+        return fov(panoView.getFovX(),
+                panoView.getFovXOffset(),
+                panoView.getFovX(),
+                panoView.getFovYOffset());
     }
 
     public SourceImage fov(Double fovX, Double offX, Double fovY, Double offY) {

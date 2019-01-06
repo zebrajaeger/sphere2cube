@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.utils;
 
 import de.zebrajaeger.sphere2cube.img.ITargetImage;
 import org.apache.commons.io.FilenameUtils;

@@ -1,23 +1,15 @@
 package de.zebrajaeger.sphere2cube.converter;
 
-import de.zebrajaeger.sphere2cube.Utils;
 import de.zebrajaeger.sphere2cube.img.ISourceImage;
-import de.zebrajaeger.sphere2cube.img.ITargetImage;
-import de.zebrajaeger.sphere2cube.img.ImgScaler;
-import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGenerator;
-import de.zebrajaeger.sphere2cube.indexhtml.IndexHtml;
-import de.zebrajaeger.sphere2cube.panoxml.PanoXmlGenerator;
 import de.zebrajaeger.sphere2cube.result.Level;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
 import de.zebrajaeger.sphere2cube.result.View;
-import de.zebrajaeger.sphere2cube.tilenamegenerator.KrPanoTileNameGenerator;
-import org.apache.commons.io.FileUtils;
+import de.zebrajaeger.sphere2cube.tilenamegenerator.TileNameGenerator;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,36 +26,30 @@ public class Sphere2Cube {
 
     private static final Logger LOG = LoggerFactory.getLogger(Sphere2Cube.class);
 
-    private final KrPanoTileNameGenerator tileNameGenerator;
+    private final TileNameGenerator tileNameGenerator;
 
-    public Sphere2Cube(String tilePattern) {
-        tileNameGenerator = KrPanoTileNameGenerator.of(tilePattern);
+    public static Sphere2Cube of(TileNameGenerator tileNameGenerator) {
+        return new Sphere2Cube(tileNameGenerator);
     }
 
-    public void renderPano(ISourceImage source, File panoXmlFile, File indexHtmlFile, File previewFile, int tileEdge, int previewEdge) throws IOException {
+    private Sphere2Cube(TileNameGenerator tileNameGenerator) {
+        this.tileNameGenerator = tileNameGenerator;
+    }
+
+    public RenderedPano renderPano(ISourceImage source, int tileEdge, int minTargetEdge, View view) {
 
         LOG.info("Pano {} x {} -> {} x {}", source.getOriginalW(), source.getOriginalH(), source.getW(), source.getH());
-        long startTime = System.currentTimeMillis();
-
-        // preview
-        LOG.info("Create preview: '{}'", previewFile.getAbsolutePath());
-        ITargetImage.Format imageFormat = Utils
-                .findImageFormat(previewFile.getName())
-                .orElseThrow(() -> new UnsupportedOperationException("No Writer for image-format"));
-        ImgScaler
-                .of(source)
-                .scaleTo(previewEdge, false)
-                .save(previewFile, imageFormat);
 
         // thread pool
-        LOG.info("Create tiles");
         int cpus = Runtime.getRuntime().availableProcessors();
         LOG.info("Using {} CPUs", cpus);
-        ExecutorService executor = Executors.newFixedThreadPool(cpus);
+        ExecutorService executor = Executors.newFixedThreadPool(
+                cpus,
+                new BasicThreadFactory.Builder().priority(Thread.MIN_PRIORITY).build());
 
         // tiles
-        Map<Face, List<Level>> faceListMap = renderFaces(executor, source, source.getW() / 4, 1024, tileEdge);
-        RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, View.of().maxpixelzoom(10d), faceListMap.get(Face.FRONT));
+        Map<Face, List<Level>> faceListMap = renderFaces(executor, source, source.getW() / 4, minTargetEdge, tileEdge);
+        RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, view, faceListMap.get(Face.FRONT));
 
         // wait for all jobs finished
         executor.shutdown();
@@ -73,15 +59,7 @@ public class Sphere2Cube {
             // nothing to do
         }
 
-        // pano.xml
-        String panoXml = PanoXmlGenerator.of().generate(renderedPano);
-        FileUtils.write(panoXmlFile, panoXml, StandardCharsets.UTF_8);
-
-        // index.html
-        String indexHtml = IndexHtmGenerator.of().generate(new IndexHtml("TestPano"));
-        FileUtils.write(indexHtmlFile, indexHtml, StandardCharsets.UTF_8);
-
-        LOG.info("finished in {}", Utils.durationToString(System.currentTimeMillis() - startTime));
+        return renderedPano;
     }
 
     private Map<Face, List<Level>> renderFaces(ExecutorService executor, ISourceImage source, int srcEdge, int minTargetEdge, int tileEdge) {

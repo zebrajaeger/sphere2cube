@@ -110,6 +110,7 @@ public class Sphere2Cube {
     private Level renderLayer(ExecutorService executor, ISourceImage source, Face face, int layer, int sourceEdge, int targetEdge, int tileEdge) {
         LOG.info("    Render Layer: " + layer);
 
+        // precheck only if a tile is bigger than the shortest edge of the (scaled to layer requirements) original image
         double r = (double) targetEdge / (double) sourceEdge; // scale of target
         double oX = (double) source.getOriginalH() * r;
         double oY = (double) source.getOriginalW() * r;

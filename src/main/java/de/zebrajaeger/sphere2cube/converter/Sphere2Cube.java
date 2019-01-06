@@ -25,6 +25,7 @@ public class Sphere2Cube {
     private static final Logger LOG = LoggerFactory.getLogger(Sphere2Cube.class);
 
     private Consumer<TileRenderResult> renderConsumer;
+    private Consumer<TileRenderResult> noRenderConsumer;
     private boolean tileDebug;
     private boolean tileDebugOverwriteContent;
     private int forceTileRenderingUpToLevel = 0;
@@ -38,6 +39,11 @@ public class Sphere2Cube {
 
     public Sphere2Cube renderConsumer(Consumer<TileRenderResult> renderConsumer) {
         this.renderConsumer = renderConsumer;
+        return this;
+    }
+
+    public Sphere2Cube noRenderConsumer(Consumer<TileRenderResult> noRenderConsumer) {
+        this.noRenderConsumer = noRenderConsumer;
         return this;
     }
 
@@ -153,6 +159,7 @@ public class Sphere2Cube {
                 executor.submit(TileRenderJob
                         .of(trf, source)
                         .renderConsumer(renderConsumer)
+                        .noRenderConsumer(noRenderConsumer)
                         .debug(tileDebug, tileDebugOverwriteContent));
                 ++y;
             }

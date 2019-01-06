@@ -23,6 +23,7 @@ public abstract class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
     private Stopwatch stopwatch;
     private String currentTask;
+    private BlackImageGenerator blackImageGenerator = BlackImageGenerator.of();
 
     public void startTask(String task) {
         stopwatch = Stopwatch.fromNow();
@@ -71,15 +72,27 @@ public abstract class App {
                     try {
                         trf.getTargetImage().save(target);
                     } catch (IOException e) {
-                        LOG.error("Could not save tile: '{}'", target.getAbsolutePath());
-                        e.printStackTrace();
+                        LOG.error("Could not save tile: '{}'", target.getAbsolutePath(), e);
                     }
-                }).renderPano(source, 512, 1024);
+                })
+                .noRenderConsumer(trf -> {
+                    File target = new File(tileRoot, tileNameGenerator.generateName(trf.getTileRenderInfo()));
+                    try {
+                        blackImageGenerator.writeToFile(
+                                trf.getTileRenderInfo().getTileEdgeX(),
+                                trf.getTileRenderInfo().getTileEdgeY(),
+                                target);
+                    } catch (IOException e) {
+                        LOG.error("Could not save tile: '{}'", target.getAbsolutePath(), e);
+                    }
+                })
+                .renderPano(source, 512, 1024);
     }
 
     void server(File root) throws IOException {
-        server(root,null);
+        server(root, null);
     }
+
     void server(File root, File darkImage) throws IOException {
         LOG.info("Start http server with docroot: '{}'", root.getAbsolutePath());
         StaticWebServer.of(root)

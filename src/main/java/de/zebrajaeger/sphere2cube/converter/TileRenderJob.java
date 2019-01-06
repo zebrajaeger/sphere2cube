@@ -20,6 +20,7 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
     private static final Logger LOG = LoggerFactory.getLogger(TileRenderJob.class);
 
     private Consumer<TileRenderResult> renderConsumer;
+    private Consumer<TileRenderResult> noRenderConsumer;
 
     private boolean tileDebug;
     private boolean tileDebugOverwriteContent = false;
@@ -45,6 +46,10 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
 
     public TileRenderJob renderConsumer(Consumer<TileRenderResult> renderConsumer) {
         this.renderConsumer = renderConsumer;
+        return this;
+    }
+    public TileRenderJob noRenderConsumer(Consumer<TileRenderResult> noRenderConsumer) {
+        this.noRenderConsumer = noRenderConsumer;
         return this;
     }
 
@@ -109,10 +114,10 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
                 renderConsumer.accept(new TileRenderResult(trf, target));
                 LOG.info("       Rendered in {}ms ", System.currentTimeMillis() - timestamp);
             } else {
-                LOG.debug("        Not in source in {}ms ", System.currentTimeMillis() - timestamp);
+                noRenderConsumer.accept(new TileRenderResult(trf, target));
             }
         } else {
-            LOG.debug("        Precheck rejection in {}ms ", System.currentTimeMillis() - timestamp);
+            noRenderConsumer.accept(new TileRenderResult(trf, null));
         }
         return trf;
     }

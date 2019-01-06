@@ -27,7 +27,6 @@ public class AppPannellum extends App {
         File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");
         File root = new File("target/pano");
         File tileRoot = new File(root, "tiles");
-        File assetsRoot = new File("assets");
 
         clean(root);
 
@@ -60,7 +59,8 @@ public class AppPannellum extends App {
         stopTask();
 
         // start http server
-        server(root, new File(assetsRoot, "dark.png"));
-//        server(root);
+//        File assetsRoot = new File("assets");
+//        server(root, new File(assetsRoot, "dark.png"));
+        server(root);
     }
 }

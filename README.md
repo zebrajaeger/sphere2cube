@@ -10,7 +10,7 @@ Today more a sandbox than a project
 * http://photopin.com/free-photos/equirectangular
 
 ## TODO (top items are more important)
-* Autopano Giga PSD/PSB info reader
+* ~~Autopano Giga PSD/PSB info reader~~
 * Pannellum output (TileNameGenerator, HtmlGenerator, ConfigGenerator)
   * https://pannellum.org/documentation/reference/ 
 * krPano preview (cubic preview)

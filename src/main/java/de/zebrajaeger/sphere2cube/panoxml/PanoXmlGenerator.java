@@ -7,6 +7,8 @@ import org.jtwig.JtwigTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Lars Brandt, Silpion IT Solutions GmbH
@@ -16,7 +18,14 @@ public class PanoXmlGenerator {
         return new PanoXmlGenerator();
     }
 
+    private Map<String, Object> values = new HashMap<>();
+
     private PanoXmlGenerator() {
+    }
+
+    public PanoXmlGenerator variable(String name, Object value){
+        values.put(name,value);
+        return this;
     }
 
     public String generate(RenderedPano pano) throws IOException {
@@ -24,6 +33,9 @@ public class PanoXmlGenerator {
             String templateString = IOUtils.toString(is, "UTF-8");
             JtwigTemplate template = JtwigTemplate.inlineTemplate(templateString);
             JtwigModel model = JtwigModel.newModel().with("pano", pano);
+            for(Map.Entry<String,Object> v : values.entrySet()){
+                model.with(v.getKey(), v.getValue());
+            }
             return template.render(model);
         }
     }

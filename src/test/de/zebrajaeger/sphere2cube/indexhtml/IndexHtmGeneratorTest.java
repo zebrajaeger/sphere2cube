@@ -7,7 +7,7 @@ import java.io.IOException;
 class IndexHtmGeneratorTest {
     @Test
     public void test1() throws IOException {
-        String result = IndexHtmGenerator.of().generate(new IndexHtml("Test1"));
+        String result = IndexHtmGeneratorKrPano.of().generate(new IndexHtmGeneratorKrPano.IndexHtml("Test1"));
         System.out.println(result);
     }
 }

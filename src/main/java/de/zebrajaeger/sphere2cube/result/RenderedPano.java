@@ -3,6 +3,7 @@ package de.zebrajaeger.sphere2cube.result;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -11,15 +12,20 @@ import java.util.List;
 public class RenderedPano {
     private Type type = Type.CUBIC;
     private int tileSize = 512;
-    private View view;
     private List<Level> levels;
     private boolean showerrors = true;
 
-    public RenderedPano(Type type, int tileSize, View view, List<Level> levels) {
+    public RenderedPano(Type type, int tileSize,  List<Level> levels) {
         this.type = type;
         this.tileSize = tileSize;
-        this.view = view;
         this.levels = levels;
+    }
+
+    public Level getMaxLevel(){
+        return levels
+                .stream()
+                .max(Comparator.comparingInt(Level::getIndex))
+                .orElseThrow(() -> new IllegalStateException("No level found"));
     }
 
     public boolean isMultires() {
@@ -36,10 +42,6 @@ public class RenderedPano {
 
     public List<Level> getLevels() {
         return levels;
-    }
-
-    public View getView() {
-        return view;
     }
 
     public boolean isShowerrors() {

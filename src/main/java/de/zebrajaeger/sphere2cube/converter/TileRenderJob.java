@@ -12,11 +12,14 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 @SuppressWarnings("Duplicates")
 public class TileRenderJob implements Callable<TileRenderInfo> {
 
     private static final Logger LOG = LoggerFactory.getLogger(TileRenderJob.class);
+
+    private Consumer<TileRenderResult> renderConsumer;
 
     private boolean tileDebug;
     private boolean tileDebugOverwriteContent = false;
@@ -40,8 +43,14 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
         return of(false, trf, source);
     }
 
-    public TileRenderJob tileDebug(boolean tileDebug) {
+    public TileRenderJob renderConsumer(Consumer<TileRenderResult> renderConsumer) {
+        this.renderConsumer = renderConsumer;
+        return this;
+    }
+
+    public TileRenderJob debug(boolean tileDebug, boolean tileDebugOverwriteContent) {
         this.tileDebug = tileDebug;
+        this.tileDebugOverwriteContent = tileDebugOverwriteContent;
         return this;
     }
 
@@ -69,14 +78,15 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
     }
 
     @Override
-    public TileRenderInfo call() throws Exception {
+    public TileRenderInfo call() {
         long timestamp = System.currentTimeMillis();
 
         boolean invertX = false;
         boolean invertY = trf.getFace() == Face.TOP;
 
+        boolean force = trf.isForceTileRendering();
         // render if precheck allowed and precheck match or n precheck
-        if (!trf.isPreCheck() || isTileWithinSource(invertX, invertY)) {
+        if (force || !trf.isPreCheck() || isTileWithinSource(invertX, invertY)) {
 
             Face face = trf.getFace();
             double sourceEdge = trf.getSourcEdge();
@@ -92,17 +102,17 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
                 }
             }
 
-            if (trf.isRenderTileIfNotInSource() | withinSource) {
+            if (force|| trf.isRenderTileIfNotInSource() || withinSource) {
                 if (tileDebug) {
                     renderDebugInfo(target, trf);
                 }
-                target.save(trf.getTargetFile());
-                LOG.info("       Rendered: '{}' in {}ms ", trf.getTargetFile().getAbsolutePath(), System.currentTimeMillis() - timestamp);
+                renderConsumer.accept(new TileRenderResult(trf, target));
+                LOG.info("       Rendered in {}ms ", System.currentTimeMillis() - timestamp);
             } else {
-                LOG.debug("        Not in source: '{}' in {}ms ", trf.getTargetFile().getAbsolutePath(), System.currentTimeMillis() - timestamp);
+                LOG.debug("        Not in source in {}ms ", System.currentTimeMillis() - timestamp);
             }
-        }else{
-            LOG.debug("        Precheck rejection: '{}' in {}ms ", trf.getTargetFile().getAbsolutePath(), System.currentTimeMillis() - timestamp);
+        } else {
+            LOG.debug("        Precheck rejection in {}ms ", System.currentTimeMillis() - timestamp);
         }
         return trf;
     }

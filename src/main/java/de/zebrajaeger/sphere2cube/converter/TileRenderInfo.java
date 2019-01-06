@@ -5,10 +5,12 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import java.io.File;
 
 public class TileRenderInfo {
+    private boolean forceTileRendering;
     private boolean renderTileIfNotInSource = false;
     private boolean preCheck = false;
 
     private Face face;
+    private int level;
 
     private int sourceEdge;
     private int targetEdge;
@@ -31,8 +33,6 @@ public class TileRenderInfo {
     private boolean mirrorX = false;
     private boolean mirrorY = false;
 
-    private File targetFile;
-
     public static TileRenderInfo of() {
         return new TileRenderInfo();
     }
@@ -42,7 +42,13 @@ public class TileRenderInfo {
         return this;
     }
 
-    public TileRenderInfo tilePosition(Face face, int tileIndexX, int tileIndexY) {
+    public TileRenderInfo forceTileRendering(boolean forceTileRendering) {
+        this.forceTileRendering = forceTileRendering;
+        return this;
+    }
+
+    public TileRenderInfo tilePosition(int level, Face face, int tileIndexX, int tileIndexY) {
+        this.level = level;
         this.face = face;
         this.tileIndexX = tileIndexX;
         this.tileIndexY = tileIndexY;
@@ -79,14 +85,13 @@ public class TileRenderInfo {
         return this;
     }
 
-    public TileRenderInfo targetFile(File targetFile) {
-        this.targetFile = targetFile;
-        return this;
-    }
-
     public TileRenderInfo preCheck(boolean preCheck) {
         this.preCheck = preCheck;
         return this;
+    }
+
+    public int getLevel() {
+        return level;
     }
 
     public int getTileCountX() {
@@ -169,10 +174,6 @@ public class TileRenderInfo {
         return y2;
     }
 
-    public File getTargetFile() {
-        return targetFile;
-    }
-
     public int getSourceEdge() {
         return sourceEdge;
     }
@@ -195,6 +196,10 @@ public class TileRenderInfo {
 
     public boolean isPreCheck() {
         return preCheck;
+    }
+
+    public boolean isForceTileRendering() {
+        return forceTileRendering;
     }
 
     @Override

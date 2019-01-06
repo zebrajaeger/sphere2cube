@@ -3,13 +3,10 @@ package de.zebrajaeger.sphere2cube.converter;
 import de.zebrajaeger.sphere2cube.img.ISourceImage;
 import de.zebrajaeger.sphere2cube.result.Level;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
-import de.zebrajaeger.sphere2cube.result.View;
-import de.zebrajaeger.sphere2cube.tilenamegenerator.TileNameGenerator;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Single equirectangular spherical Image to multible cube images
@@ -26,17 +24,35 @@ public class Sphere2Cube {
 
     private static final Logger LOG = LoggerFactory.getLogger(Sphere2Cube.class);
 
-    private final TileNameGenerator tileNameGenerator;
+    private Consumer<TileRenderResult> renderConsumer;
+    private boolean tileDebug;
+    private boolean tileDebugOverwriteContent;
+    private int forceTileRenderingUpToLevel = 0;
 
-    public static Sphere2Cube of(TileNameGenerator tileNameGenerator) {
-        return new Sphere2Cube(tileNameGenerator);
+    public static Sphere2Cube of() {
+        return new Sphere2Cube();
     }
 
-    private Sphere2Cube(TileNameGenerator tileNameGenerator) {
-        this.tileNameGenerator = tileNameGenerator;
+    private Sphere2Cube() {
     }
 
-    public RenderedPano renderPano(ISourceImage source, int tileEdge, int minTargetEdge, View view) {
+    public Sphere2Cube renderConsumer(Consumer<TileRenderResult> renderConsumer) {
+        this.renderConsumer = renderConsumer;
+        return this;
+    }
+
+    public Sphere2Cube forceTileRenderingUpToLevel(int forceTileRenderingUpToLevel) {
+        this.forceTileRenderingUpToLevel = forceTileRenderingUpToLevel;
+        return this;
+    }
+
+    public Sphere2Cube debug(boolean tileDebug, boolean tileDebugOverwriteContent) {
+        this.tileDebug = tileDebug;
+        this.tileDebugOverwriteContent = tileDebugOverwriteContent;
+        return this;
+    }
+
+    public RenderedPano renderPano(ISourceImage source, int tileEdge, int minTargetEdge) {
 
         LOG.info("Pano {} x {} -> {} x {}", source.getOriginalW(), source.getOriginalH(), source.getW(), source.getH());
 
@@ -49,7 +65,7 @@ public class Sphere2Cube {
 
         // tiles
         Map<Face, List<Level>> faceListMap = renderFaces(executor, source, source.getW() / 4, minTargetEdge, tileEdge);
-        RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, view, faceListMap.get(Face.FRONT));
+        RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, faceListMap.get(Face.FRONT));
 
         // wait for all jobs finished
         executor.shutdown();
@@ -74,13 +90,27 @@ public class Sphere2Cube {
         List<Level> result = new LinkedList<>();
 
         LOG.info("Render Face: " + face);
-        int targetEdge = 4 * sourceEdge / 3;
-        int layer = 1;
-        do {
-            result.add(renderLayer(executor, source, face, layer, sourceEdge, targetEdge, tileEdge));
+
+        int maxTargetEdge = 4 * sourceEdge / 3;
+
+        // TODO move up
+        // level with best resolution hat highest layer number. So ee need the number and count down to 1
+        int targetEdge = maxTargetEdge;
+        int maxLevel = 0;
+        while (targetEdge > tileEdge) {
             targetEdge /= 2;
-            ++layer;
-        } while (targetEdge > minTargetEdge);
+            ++maxLevel;
+        }
+
+        // at least one level
+        maxLevel = Math.max(1, maxLevel);
+
+        // render
+        targetEdge = maxTargetEdge;
+        for (int level = maxLevel; level > 0; --level) {
+            result.add(renderLayer(executor, source, face, level, sourceEdge, targetEdge, tileEdge));
+            targetEdge /= 2;
+        }
 
         return result;
     }
@@ -105,18 +135,25 @@ public class Sphere2Cube {
             for (int y1 = 0; y1 < targetEdge; y1 += tileEdge) {
                 int y2 = Math.min(y1 + tileEdge, targetEdge);
 
-                TileRenderInfo trf = TileRenderInfo.of()
+                TileRenderInfo trf = TileRenderInfo
+                        .of()
+                        .forceTileRendering(layer <= forceTileRenderingUpToLevel)
                         .renderTileIfNotInSource(false)
                         .preCheck(precheck)
-                        .tilePosition(face, x, y)
+                        .tilePosition(layer, face, x, y)
                         .tileSection(x1, x2, y1, y2)
                         .mirror(false, face == Face.TOP)
                         .tilesInFace(count, count)
-                        .edgeSizes(sourceEdge, targetEdge, tileEdge, tileEdge)
-                        .targetFile(new File(tileNameGenerator.generateName(face, layer, count, x + 1, count, y + 1)));
+                        .edgeSizes(sourceEdge, targetEdge, tileEdge, tileEdge);
 
-                executor.submit(TileRenderJob.of(trf, source).tileDebug(true));
+                tileDebug = true;
+                tileDebugOverwriteContent = false;
 
+                // put to render-queue
+                executor.submit(TileRenderJob
+                        .of(trf, source)
+                        .renderConsumer(renderConsumer)
+                        .debug(tileDebug, tileDebugOverwriteContent));
                 ++y;
             }
             ++x;

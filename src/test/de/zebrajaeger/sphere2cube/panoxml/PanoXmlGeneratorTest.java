@@ -2,7 +2,6 @@ package de.zebrajaeger.sphere2cube.panoxml;
 
 import de.zebrajaeger.sphere2cube.result.Level;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
-import de.zebrajaeger.sphere2cube.result.View;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -17,7 +16,7 @@ class PanoXmlGeneratorTest {
         levels.add(new Level(2, 200, 200, 2, 2));
         levels.add(new Level(3, 400, 400, 5, 5));
 
-        RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, 512, View.of(), levels);
+        RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, 512, levels);
 
         String result = PanoXmlGenerator.of().generate(renderedPano);
         System.out.println(result);

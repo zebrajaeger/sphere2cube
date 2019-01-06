@@ -1,5 +1,8 @@
 package de.zebrajaeger.sphere2cube.img;
 
+/**
+ * Simple implementation. No interpolation, just copies pixels. May produce ugly artifacts.
+ */
 public class ImgScaler {
     private ISourceImage source;
 

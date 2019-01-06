@@ -2,6 +2,8 @@ package de.zebrajaeger.sphere2cube.converter;
 
 import de.zebrajaeger.sphere2cube.Utils;
 import de.zebrajaeger.sphere2cube.img.ISourceImage;
+import de.zebrajaeger.sphere2cube.img.ITargetImage;
+import de.zebrajaeger.sphere2cube.img.ImgScaler;
 import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGenerator;
 import de.zebrajaeger.sphere2cube.indexhtml.IndexHtml;
 import de.zebrajaeger.sphere2cube.panoxml.PanoXmlGenerator;
@@ -38,12 +40,23 @@ public class Sphere2Cube {
         tileNameGenerator = KrPanoTileNameGenerator.of(tilePattern);
     }
 
-    public void renderPano(ISourceImage source, File panoXmlFile, File indexHtmlFile, int tileEdge) throws IOException {
+    public void renderPano(ISourceImage source, File panoXmlFile, File indexHtmlFile, File previewFile, int tileEdge, int previewEdge) throws IOException {
 
         LOG.info("Pano {} x {} -> {} x {}", source.getOriginalW(), source.getOriginalH(), source.getW(), source.getH());
         long startTime = System.currentTimeMillis();
 
+        // preview
+        LOG.info("Create preview: '{}'", previewFile.getAbsolutePath());
+        ITargetImage.Format imageFormat = Utils
+                .findImageFormat(previewFile.getName())
+                .orElseThrow(() -> new UnsupportedOperationException("No Writer for image-format"));
+        ImgScaler
+                .of(source)
+                .scaleTo(previewEdge, false)
+                .save(previewFile, imageFormat);
+
         // thread pool
+        LOG.info("Create tiles");
         int cpus = Runtime.getRuntime().availableProcessors();
         LOG.info("Using {} CPUs", cpus);
         ExecutorService executor = Executors.newFixedThreadPool(cpus);

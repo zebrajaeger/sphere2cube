@@ -9,4 +9,6 @@ public interface ISourceImage {
     int getH();
     int getOriginalW();
     int getOriginalH();
+    int getOriginalX();
+    int getOriginalY();
 }

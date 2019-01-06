@@ -11,9 +11,10 @@ import java.net.URISyntaxException;
 
 public class App {
     public static void main(String[] args) throws IOException, URISyntaxException {
-        if (true) {
+            File root = new File("target/pano");
             // clean
-            FileUtils.deleteDirectory(new File("target/pano"));
+            FileUtils.deleteDirectory(root);
+            root.mkdirs();
 
             // copy assets
             FileUtils.copyDirectory(new File("assets/skin"), new File("target/pano/skin"));
@@ -24,12 +25,12 @@ public class App {
             s2c.renderPano(
                     //SourceImage.of("samples/raster(5000x2500).png").fov(180d, 0d, 90d, 0d),
                     //SourceImage.of("samples/pano1(5376x2688).jpg").fov(180d, 0d, 90d, 0d),
-                    SourceImage.of("samples/sylvester[S][35.60x4.95(-14.99)].psb").fov(35.6, -90d, 4.95d, 0d),
+                    SourceImage.of("samples/sylvester[S][35.60x4.95(-14.99)].psb").fov(35.6, 0d, 4.95d, 0d),
                     new File("target/pano/pano.xml"),
                     new File("target/pano/index.html"),
-                    512);
-
-        }
+                    new File("target/pano/preview.jpg"),
+                    512,
+                    1024);
 
         // start http server
         StaticWebServer.of("target/pano")

@@ -18,5 +18,25 @@ public interface ITargetImage {
 
     void save(File file) throws IOException;
 
+    void save(File file, Format format) throws IOException;
+
     void save(String filePath) throws IOException;
+
+    void save(String filePath, Format format) throws IOException;
+
+    enum Format {
+        JPG("jpg"),
+        PNG("png"),
+        ;
+
+        private String formatName;
+
+        Format(String formatName) {
+            this.formatName = formatName;
+        }
+
+        public String getFormatName() {
+            return formatName;
+        }
+    }
 }

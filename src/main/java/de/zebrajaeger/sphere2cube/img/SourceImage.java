@@ -133,6 +133,16 @@ public class SourceImage implements ISourceImage {
     }
 
     @Override
+    public int getOriginalX() {
+        return minX;
+    }
+
+    @Override
+    public int getOriginalY() {
+        return minY;
+    }
+
+    @Override
     public String toString() {
         return ReflectionToStringBuilder.toString(ToStringStyle.SHORT_PREFIX_STYLE);
     }

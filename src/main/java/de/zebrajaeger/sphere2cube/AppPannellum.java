@@ -59,6 +59,8 @@ public class AppPannellum extends App {
         FileUtils.write(indexHtmlFile, indexHtml, StandardCharsets.UTF_8);
         stopTask();
 
+        finish();
+
         // start http server
 //        File assetsRoot = new File("assets");
 //        server(root, new File(assetsRoot, "dark.png"));

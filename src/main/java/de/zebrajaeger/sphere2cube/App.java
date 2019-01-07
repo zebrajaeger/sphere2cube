@@ -100,4 +100,8 @@ public abstract class App {
                 .start()
                 .openBrowser();
     }
+
+    void finish(){
+        LOG.info(blackImageGenerator.toString());
+    }
 }

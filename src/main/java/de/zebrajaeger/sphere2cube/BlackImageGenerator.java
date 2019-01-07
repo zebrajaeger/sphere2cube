@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class BlackImageGenerator {
 
@@ -28,7 +29,7 @@ public class BlackImageGenerator {
         }
     };
 
-    private Map<Long, byte[]> cache = new HashMap<>();
+    private Map<Long, Entry> cache = new HashMap<>();
     private ImageInitializer imageInitializer;
 
     public static BlackImageGenerator of() {
@@ -47,7 +48,7 @@ public class BlackImageGenerator {
         return (long) (w) << 16 + h;
     }
 
-    private byte[] create(int w, int h) {
+    private Entry create(int w, int h) {
         // create image
         BufferedImage img = new BufferedImage(w, h, java.awt.image.BufferedImage.TYPE_INT_RGB);
 
@@ -63,17 +64,18 @@ public class BlackImageGenerator {
         } catch (IOException e) {
             throw new RuntimeException("Error creating black image", e);
         }
-        return os.toByteArray();
+        return new Entry(os.toByteArray(),w,h);
     }
 
     public byte[] generate(int w, int h) {
         long key = makeKey(w, h);
-        byte[] img = cache.get(key);
+        Entry img = cache.get(key);
         if (img == null) {
             img = create(w, h);
             cache.put(key, img);
         }
-        return img;
+        img.access();
+        return img.data;
     }
 
     public void writeToFile(int w, int h, File target) throws IOException {
@@ -81,6 +83,54 @@ public class BlackImageGenerator {
         FileUtils.writeByteArrayToFile(target, img);
     }
 
+    @Override
+    public String toString() {
+        return cache.values().stream().map( e -> e.toString() ).collect(Collectors.joining(", \n"));
+    }
+
     public interface ImageInitializer extends Consumer<BufferedImage> {
+    }
+
+    private static class Entry{
+        private byte[] data;
+        private int w;
+        private int h;
+        private long accessed = 0;
+
+        public Entry(byte[] data, int w, int h) {
+            this.data = data;
+            this.w = w;
+            this.h = h;
+        }
+
+        public synchronized void access(){
+            accessed++;
+        }
+
+        public byte[] getData() {
+            return data;
+        }
+
+        public int getW() {
+            return w;
+        }
+
+        public int getH() {
+            return h;
+        }
+
+        public long getAccessed() {
+            return accessed;
+        }
+
+        @Override
+        public String toString() {
+            return "Entry{" +
+                    "w=" + w +
+                    ", h=" + h +
+                    ", size=" + data.length +
+                    ", accessed=" + accessed +
+                    '}';
+        }
     }
 }

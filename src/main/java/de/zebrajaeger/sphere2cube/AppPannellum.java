@@ -37,7 +37,7 @@ public class AppPannellum extends App {
         startTask("Render tile");
         ViewCalculator.PanoView panoView = findView(sourceFile);
         SourceImage source = SourceImage.of(sourceFile).fov(panoView);
-        RenderedPano renderedPano = renderTiles(tileRoot, source, PannellumTileNameGenerator.of());
+        RenderedPano renderedPano = renderTiles(tileRoot, source, PannellumTileNameGenerator.of(), false, false);
         stopTask();
 
         // preview

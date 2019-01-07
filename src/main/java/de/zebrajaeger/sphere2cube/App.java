@@ -62,10 +62,14 @@ public abstract class App {
         stopTask();
     }
 
-    protected RenderedPano renderTiles(File tileRoot, SourceImage source, TileNameGenerator tileNameGenerator) {
-
+    protected RenderedPano renderTiles(File tileRoot,
+                                       SourceImage source,
+                                       TileNameGenerator tileNameGenerator,
+                                       boolean tileDebug,
+                                       boolean tileDebugOverwriteContent) {
         return Sphere2Cube
                 .of()
+                .debug(tileDebug, tileDebugOverwriteContent)
                 .forceTileRenderingUpToLevel(2)
                 .renderConsumer(trf -> {
                     File target = new File(tileRoot, tileNameGenerator.generateName(trf.getTileRenderInfo()));
@@ -101,7 +105,7 @@ public abstract class App {
                 .openBrowser();
     }
 
-    void finish(){
+    void finish() {
         LOG.info(blackImageGenerator.toString());
     }
 }

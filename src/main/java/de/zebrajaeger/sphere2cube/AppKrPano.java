@@ -44,7 +44,7 @@ public class AppKrPano extends App {
         startTask("Render tile");
         ViewCalculator.PanoView panoView = findView(sourceFile);
         SourceImage source = SourceImage.of(sourceFile).fov(panoView);
-        RenderedPano renderedPano = renderTiles(tileRoot, source, KrPanoTileNameGenerator.of());
+        RenderedPano renderedPano = renderTiles(tileRoot, source, KrPanoTileNameGenerator.of(), false, false);
         stopTask();
 
         // preview

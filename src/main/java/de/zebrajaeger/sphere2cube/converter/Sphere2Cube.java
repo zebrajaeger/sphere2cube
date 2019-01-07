@@ -149,9 +149,6 @@ public class Sphere2Cube {
                         .tilesInFace(count, count)
                         .edgeSizes(sourceEdge, targetEdge, tileEdge, tileEdge);
 
-                tileDebug = true;
-                tileDebugOverwriteContent = false;
-
                 // put to render-queue
                 executor.submit(TileRenderJob
                         .of(trf, source)

@@ -302,5 +302,7 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
 
         g.setColor(originalColor);
         g.setStroke(originalStroke);
+
+        g.dispose();
     }
 }

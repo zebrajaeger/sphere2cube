@@ -24,7 +24,10 @@ public class AppPannellum extends App {
 
     protected void process(String[] args) throws IOException, ImageProcessingException {
 
-        boolean dryRun = false;
+        boolean clean = true;
+        boolean tiles = true;
+        boolean preview = false;
+        boolean server = true;
         boolean tileDebug = false;
 
         File sourceFile = new File("samples/test.psb");
@@ -32,7 +35,7 @@ public class AppPannellum extends App {
         File root = new File("target/pano");
         File tileRoot = new File(root, "tiles");
 
-        if (!dryRun) {
+        if (clean) {
             clean(root);
         }
 
@@ -46,7 +49,7 @@ public class AppPannellum extends App {
         stopTask();
 
         // preview
-        if (!dryRun) {
+        if (preview) {
             preview(source, new File(root, "preview.jpg"));
         }
 
@@ -56,7 +59,7 @@ public class AppPannellum extends App {
                 tileRoot,
                 source,
                 PannellumTileNameGenerator.of(),
-                dryRun,
+                !tiles,
                 tileDebug,
                 false);
         stopTask();
@@ -83,6 +86,8 @@ public class AppPannellum extends App {
         // start http server
 //        File assetsRoot = new File("assets");
 //        server(root, new File(assetsRoot, "dark.png"));
-        server(root);
+        if (server) {
+            server(root);
+        }
     }
 }

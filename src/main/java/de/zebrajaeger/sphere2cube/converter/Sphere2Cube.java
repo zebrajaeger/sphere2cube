@@ -3,14 +3,13 @@ package de.zebrajaeger.sphere2cube.converter;
 import de.zebrajaeger.sphere2cube.img.ISourceImage;
 import de.zebrajaeger.sphere2cube.result.Level;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
+import de.zebrajaeger.sphere2cube.utils.Stopwatch;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +63,7 @@ public class Sphere2Cube {
         return this;
     }
 
-    public RenderedPano renderPano(ISourceImage source, int tileEdge, int minTargetEdge) {
+    public RenderedPano renderPano(ISourceImage source, int tileEdge) {
 
         LOG.info("Pano {} x {} -> {} x {}", source.getOriginalW(), source.getOriginalH(), source.getW(), source.getH());
 
@@ -76,8 +75,8 @@ public class Sphere2Cube {
                 new BasicThreadFactory.Builder().priority(Thread.MIN_PRIORITY).build());
 
         // tiles
-        Map<Face, List<Level>> faceListMap = renderFaces(executor, source, source.getW() / 4, minTargetEdge, tileEdge);
-        RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, faceListMap.get(Face.FRONT));
+        List<Level> levels = renderFaces(executor, source, tileEdge);
+        RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, tileEdge, levels);
 
         // wait for all jobs finished
         executor.shutdown();
@@ -90,19 +89,10 @@ public class Sphere2Cube {
         return renderedPano;
     }
 
-    private Map<Face, List<Level>> renderFaces(ExecutorService executor, ISourceImage source, int srcEdge, int minTargetEdge, int tileEdge) {
-        Map<Face, List<Level>> result = new HashMap<>();
-        for (Face face : Face.values()) {
-            result.put(face, renderFace(executor, source, face, srcEdge, minTargetEdge, tileEdge));
-        }
-        return result;
-    }
-
-    private List<Level> renderFace(ExecutorService executor, ISourceImage source, Face face, int sourceEdge, int minTargetEdge, int tileEdge) {
+    private List<Level> renderFaces(ExecutorService executor, ISourceImage source, int tileEdge) {
         List<Level> result = new LinkedList<>();
 
-        LOG.info("Render Face: " + face);
-
+        int sourceEdge = source.getW() / 4;
         int maxTargetEdge = 4 * sourceEdge / 3;
 
         // TODO move up
@@ -115,24 +105,31 @@ public class Sphere2Cube {
         }
 
         // render
+        ISourceImage currentImage = source;
         targetEdge = maxTargetEdge;
         for (int level = maxLevel; level > 0; --level) {
-            result.add(renderLayer(executor, source, face, level, sourceEdge, targetEdge, tileEdge));
+            for (Face face : Face.values()) {
+                LOG.info("Render Level: '{}' Face: '{}')", level, face);
+                Level l = renderLayer(executor, source, face, level, sourceEdge, targetEdge, tileEdge);
+                LOG.info("    -> '{}' image(s)", l.getImageCount());
+                result.add(l);
+            }
             targetEdge /= 2;
+            Stopwatch stopwatch = Stopwatch.fromNow();
+            currentImage = currentImage.createScaledInstance(currentImage.getOriginalW() / 2, currentImage.getOriginalW() / 4);
+            LOG.info("Downscale in '{}'", stopwatch.stop().toHumanReadable());
         }
 
         return result;
     }
 
     private Level renderLayer(ExecutorService executor, ISourceImage source, Face face, int layer, int sourceEdge, int targetEdge, int tileEdge) {
-        LOG.info("    Render Layer: " + layer);
-
         // precheck only if a tile is bigger than the shortest edge of the (scaled to layer requirements) original image
         double r = (double) targetEdge / (double) sourceEdge; // scale of target
         double oX = (double) source.getOriginalH() * r;
         double oY = (double) source.getOriginalW() * r;
         double oL = Math.min(oX, oY);
-        boolean precheck = (oL > tileEdge);
+        boolean preCheck = (oL > tileEdge);
 
         int x = 0;
         int y = 0;
@@ -148,7 +145,7 @@ public class Sphere2Cube {
                         .of()
                         .forceTileRendering(layer <= forceTileRenderingUpToLevel)
                         .renderTileIfNotInSource(false)
-                        .preCheck(precheck)
+                        .preCheck(preCheck)
                         .tilePosition(layer, face, x, y)
                         .tileSection(x1, x2, y1, y2)
                         .mirror(false, face == Face.TOP)
@@ -168,6 +165,6 @@ public class Sphere2Cube {
             ++x;
         }
 
-        return new Level(layer, targetEdge, targetEdge, targetEdge, x, y);
+        return new Level(layer, targetEdge, targetEdge, targetEdge, x, y, count * count);
     }
 }

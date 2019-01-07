@@ -92,7 +92,7 @@ public abstract class App {
                         LOG.error("Could not save tile: '{}'", target.getAbsolutePath(), e);
                     }
                 })
-                .renderPano(source, 512, 1024);
+                .renderPano(source, 512);
     }
 
     void server(File root) throws IOException {

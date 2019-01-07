@@ -12,9 +12,9 @@ class PanoXmlGeneratorTest {
     @Test
     public void test1() throws IOException {
         List<Level> levels = new LinkedList<>();
-        levels.add(new Level(1, 0,100, 100, 1, 1));
-        levels.add(new Level(2, 0,200, 200, 2, 2));
-        levels.add(new Level(3,0, 400, 400, 5, 5));
+        levels.add(new Level(1, 0,100, 100, 1, 1,37));
+        levels.add(new Level(2, 0,200, 200, 2, 2,37));
+        levels.add(new Level(3,0, 400, 400, 5, 5,37));
 
         RenderedPano renderedPano = new RenderedPano(RenderedPano.Type.CUBIC, 512, levels);
 

@@ -46,6 +46,8 @@ public class GenerateTestImage {
             g.drawLine(0, y + 1, w, y + 1);
         }
 
+        g.dispose();
+
         ImageIO.write(target, "png", new File(String.format("samples/raster(%sx%s).png", w, h)));
         System.out.println("ok");
     }

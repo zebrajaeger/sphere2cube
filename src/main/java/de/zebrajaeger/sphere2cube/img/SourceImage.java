@@ -1,5 +1,6 @@
 package de.zebrajaeger.sphere2cube.img;
 
+import com.twelvemonkeys.image.ResampleOp;
 import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -47,10 +48,15 @@ public class SourceImage implements ISourceImage {
 
     public SourceImage read(File file) throws IOException {
         this.file = file;
-        image = ImageIO.read(file);
+         BufferedImage img = ImageIO.read(file);
         if (image == null) {
             throw new IllegalArgumentException("Could not read image: '" + file.getAbsolutePath() + "'");
         }
+        image(img);
+        return this;
+    }
+
+    protected SourceImage image(BufferedImage image){
         raster = image.getRaster();
         w = image.getWidth();
         h = image.getHeight();
@@ -60,6 +66,7 @@ public class SourceImage implements ISourceImage {
         maxY = image.getHeight();
         iW = image.getWidth();
         iH = image.getHeight();
+
         return this;
     }
 
@@ -68,6 +75,16 @@ public class SourceImage implements ISourceImage {
                 panoView.getFovXOffset(),
                 panoView.getFovX(),
                 panoView.getFovYOffset());
+    }
+
+    public ISourceImage createScaledInstance(int w, int h){
+        return new SourceImage()
+                .image(new ResampleOp(w, h, ResampleOp.FILTER_LANCZOS).filter(image, null))
+                .fov(this);
+    }
+
+    protected SourceImage fov(SourceImage source) {
+        return fov(source.fovX, source.offX, source.fovY, source.offY);
     }
 
     public SourceImage fov(Double fovX, Double offX, Double fovY, Double offY) {

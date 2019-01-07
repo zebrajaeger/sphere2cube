@@ -13,14 +13,16 @@ public class Level {
     private int h;
     private int tilesX;
     private int tilesY;
+    private int imageCount;
 
-    public Level(int index, int targetEdge, int w, int h, int tilesX, int tilesY) {
+    public Level(int index, int targetEdge, int w, int h, int tilesX, int tilesY, int imageCount) {
         this.index = index;
         this.targetEdge = targetEdge;
         this.w = w;
         this.h = h;
         this.tilesX = tilesX;
         this.tilesY = tilesY;
+        this.imageCount = imageCount;
     }
 
     public int getIndex() {
@@ -45,6 +47,10 @@ public class Level {
 
     public int getTargetEdge() {
         return targetEdge;
+    }
+
+    public int getImageCount() {
+        return imageCount;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package de.zebrajaeger.sphere2cube.img;
 
 import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -20,10 +20,21 @@ public class TargetImage implements ITargetImage {
         return new TargetImage(w, h);
     }
 
+    public static TargetImage of(BufferedImage image) {
+        return new TargetImage(image);
+    }
+
     protected TargetImage(int w, int h) {
         this.w = w;
         this.h = h;
         image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        raster = image.getRaster();
+    }
+
+    protected TargetImage(BufferedImage image) {
+        this.w = image.getWidth();
+        this.h = image.getHeight();
+        this.image = image;
         raster = image.getRaster();
     }
 
@@ -66,5 +77,4 @@ public class TargetImage implements ITargetImage {
     public int getH() {
         return h;
     }
-
 }

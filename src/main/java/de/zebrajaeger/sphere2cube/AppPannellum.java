@@ -31,17 +31,21 @@ public class AppPannellum extends App {
 
         clean(root);
 
-        // render pano
+        // read image
         // TODO check that all needed values are available (at last fovX and fovY)
         // TODO check projection == equirectangular
-        startTask("Render tile");
+        startTask("Load source image");
         ViewCalculator.PanoView panoView = findView(sourceFile);
         SourceImage source = SourceImage.of(sourceFile).fov(panoView);
-        RenderedPano renderedPano = renderTiles(tileRoot, source, PannellumTileNameGenerator.of(), false, false);
         stopTask();
 
         // preview
         preview(source, new File(root, "preview.jpg"));
+
+        // render tiles
+        startTask("Render tile");
+        RenderedPano renderedPano = renderTiles(tileRoot, source, PannellumTileNameGenerator.of(), false, false);
+        stopTask();
 
         // index.html
         File indexHtmlFile = new File(root, "index.html");

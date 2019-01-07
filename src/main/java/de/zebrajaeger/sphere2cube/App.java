@@ -28,7 +28,7 @@ public abstract class App {
     public void startTask(String task) {
         stopwatch = Stopwatch.fromNow();
         currentTask = task;
-        LOG.info("'Task {}' started", currentTask);
+        LOG.info("Task '{}' started", currentTask);
     }
 
     public void stopTask() {

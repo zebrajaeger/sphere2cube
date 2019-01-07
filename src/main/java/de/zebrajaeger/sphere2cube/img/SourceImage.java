@@ -130,6 +130,10 @@ public class SourceImage implements ISourceImage {
         return h;
     }
 
+    public BufferedImage getImage() {
+        return image;
+    }
+
     @Override
     public int getOriginalW() {
         return (int) iW;

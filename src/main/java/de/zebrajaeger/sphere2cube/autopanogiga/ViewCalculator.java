@@ -138,7 +138,7 @@ public class ViewCalculator {
 
         if (result.fovY != null) {
             if (result.fovYOffset != null) {
-                result.fovY1 = 90d - (result.fovY / 2d) + result.fovXOffset;
+                result.fovY1 = 90d - (result.fovY / 2d) + result.fovYOffset;
             } else {
                 result.fovY1 = 90d - (result.fovY / 2d);
             }
@@ -157,20 +157,24 @@ public class ViewCalculator {
         if (fovX1 != null && fovX2 != null && fovY1 != null && fovY2 != null) {
             double lookAtX = (fovX1 + fovX2) / 2;
             double lookAtY = (fovY1 + fovY2) / 2;
-            result = new PanoView(fovX1 - 180d, fovX2 - 180d, fovY1 - 90d, fovY2 - 90d, lookAtX - 180d, lookAtY - 90d);
+            double yOff = this.fovYOffset != null ? this.fovYOffset : 0d;
+            result = new PanoView(
+                    fovX1 - 180d, fovX2 - 180d, fovY1 - 90d, fovY2 - 90d,
+                    fovY1 - 90d - yOff - yOff, fovY2 - 90d - yOff - yOff,
+                    lookAtX - 180d, lookAtY - 90d,
+                    lookAtY - 90d // TODO not correct
+            );
 
-            if(fovXOffset!=null){
+            if (fovXOffset != null) {
                 result.fovXOffset = fovXOffset;
                 result.fovX1 += fovXOffset;
                 result.fovX2 += fovXOffset;
                 result.lookAtX += fovXOffset;
             }
-            if(fovYOffset!=null){
-                result.fovYOffset = fovYOffset;
-                result.fovY1 += fovYOffset;
-                result.fovY2 += fovYOffset;
-                result.lookAtY += fovYOffset;
-            }
+            result.fovYOffset = yOff;
+            result.fovY1 += yOff;
+            result.fovY2 += yOff;
+            result.lookAtY += yOff;
         }
         return Optional.ofNullable(result);
     }
@@ -298,16 +302,27 @@ public class ViewCalculator {
         private double fovYOffset = 0;
         private double fovY1;
         private double fovY2;
+        private double fovY1Inv;
+        private double fovY2Inv;
         private double lookAtX;
         private double lookAtY;
+        private double lookAtYInv;
 
-        public PanoView(double fovX1, double fovX2, double fovY1, double fovY2, double lookAtX, double lookAtY) {
+        public PanoView(
+                double fovX1, double fovX2, double fovY1, double fovY2,
+                double fovY1Inv, double fovY2Inv,
+                double lookAtX, double lookAtY,
+                double lookAtYInv) {
             this.fovX1 = fovX1;
             this.fovX2 = fovX2;
             this.fovX = fovX2 - fovX1;
             this.fovY1 = fovY1;
             this.fovY2 = fovY2;
             this.fovY = fovY2 - fovY1;
+
+            this.fovY2Inv = fovY2Inv;
+            this.fovY1Inv = fovY1Inv;
+
             this.lookAtX = lookAtX;
             this.lookAtY = lookAtY;
         }
@@ -350,6 +365,18 @@ public class ViewCalculator {
 
         public double getFovYOffset() {
             return fovYOffset;
+        }
+
+        public double getFovY1Inv() {
+            return fovY1Inv;
+        }
+
+        public double getFovY2Inv() {
+            return fovY2Inv;
+        }
+
+        public double getLookAtYInv() {
+            return lookAtYInv;
         }
 
         @Override

@@ -65,10 +65,12 @@ public abstract class App {
     protected RenderedPano renderTiles(File tileRoot,
                                        SourceImage source,
                                        TileNameGenerator tileNameGenerator,
+                                       boolean dryRun,
                                        boolean tileDebug,
                                        boolean tileDebugOverwriteContent) {
         return Sphere2Cube
                 .of()
+                .dryRun(dryRun)
                 .debug(tileDebug, tileDebugOverwriteContent)
                 .forceTileRenderingUpToLevel(2)
                 .renderConsumer(trf -> {

@@ -38,13 +38,22 @@ public class AppKrPano extends App {
         FileUtils.copyFile(new File(assetsRoot, "krpano.js"), new File(root, "krpano.js"));
         stopTask();
 
-        // render pano
         // TODO check that all needed values are available (at last fovX and fovY)
         // TODO check projection == equirectangular
-        startTask("Render tile");
+        startTask("Load source image");
         ViewCalculator.PanoView panoView = findView(sourceFile);
         SourceImage source = SourceImage.of(sourceFile).fov(panoView);
-        RenderedPano renderedPano = renderTiles(tileRoot, source, KrPanoTileNameGenerator.of(), false, false);
+        stopTask();
+
+        // render pano
+        startTask("Render tile");
+        RenderedPano renderedPano = renderTiles(
+                tileRoot,
+                source,
+                KrPanoTileNameGenerator.of(),
+                false,
+                false,
+                false);
         stopTask();
 
         // preview

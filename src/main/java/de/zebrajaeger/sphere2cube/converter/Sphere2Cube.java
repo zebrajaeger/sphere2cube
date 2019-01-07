@@ -26,6 +26,7 @@ public class Sphere2Cube {
 
     private Consumer<TileRenderResult> renderConsumer;
     private Consumer<TileRenderResult> noRenderConsumer;
+    private boolean dryRun;
     private boolean tileDebug;
     private boolean tileDebugOverwriteContent;
     private int forceTileRenderingUpToLevel = 0;
@@ -49,6 +50,11 @@ public class Sphere2Cube {
 
     public Sphere2Cube forceTileRenderingUpToLevel(int forceTileRenderingUpToLevel) {
         this.forceTileRenderingUpToLevel = forceTileRenderingUpToLevel;
+        return this;
+    }
+
+    public Sphere2Cube dryRun(boolean dryRun) {
+        this.dryRun = dryRun;
         return this;
     }
 
@@ -150,11 +156,13 @@ public class Sphere2Cube {
                         .edgeSizes(sourceEdge, targetEdge, tileEdge, tileEdge);
 
                 // put to render-queue
-                executor.submit(TileRenderJob
-                        .of(trf, source)
-                        .renderConsumer(renderConsumer)
-                        .noRenderConsumer(noRenderConsumer)
-                        .debug(tileDebug, tileDebugOverwriteContent));
+                if (!dryRun) {
+                    executor.submit(TileRenderJob
+                            .of(trf, source)
+                            .renderConsumer(renderConsumer)
+                            .noRenderConsumer(noRenderConsumer)
+                            .debug(tileDebug, tileDebugOverwriteContent));
+                }
                 ++y;
             }
             ++x;

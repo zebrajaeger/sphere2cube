@@ -25,7 +25,9 @@ public class IndexHtmGeneratorPannellum extends IndexHtmlGenerator {
      * @author Lars Brandt, Silpion IT Solutions GmbH
      */
     public static class IndexHtml {
-        private String title;
+        private String pageTitle;
+        private String panoTitle;
+        private String panoAuthor;
         private String basePath;
         private String path;
         private String extension;
@@ -33,18 +35,68 @@ public class IndexHtmGeneratorPannellum extends IndexHtmlGenerator {
         private long maxLevel;
         private long cubeResolution;
 
-        public IndexHtml(String title, String basePath, String path, String extension, long tileResolution, long maxLevel, long cubeResolution) {
-            this.title = title;
+        private double minYaw = -180d;
+        private double maxYaw = 180d;
+        private double minPitch = -90;
+        private double maxPitch = -90;
+
+        private boolean autoLoad = false;
+        private double autoRotate = 0d;
+
+        public static IndexHtml of() {
+            return new IndexHtml();
+        }
+
+        private IndexHtml() {
+        }
+
+        public IndexHtml auto(boolean autoLoad, double autoRotate) {
+            this.autoLoad = autoLoad;
+            this.autoRotate = autoRotate;
+
+            return this;
+        }
+
+        public IndexHtml resolution(long cubeResolution, long tileResolution, long maxLevel) {
+            this.cubeResolution = cubeResolution;
+            this.tileResolution = tileResolution;
+            this.maxLevel = maxLevel;
+
+            return this;
+        }
+
+        public IndexHtml path(String basePath, String path, String extension) {
             this.basePath = basePath;
             this.path = path;
             this.extension = extension;
-            this.tileResolution = tileResolution;
-            this.maxLevel = maxLevel;
-            this.cubeResolution = cubeResolution;
+            return this;
         }
 
-        public String getTitle() {
-            return title;
+        public IndexHtml meta(String pageTitle, String panoTitle, String panoAuthor) {
+            this.pageTitle = pageTitle;
+            this.panoTitle = panoTitle;
+            this.panoAuthor = panoAuthor;
+            return this;
+        }
+
+        public IndexHtml fov(double minYaw, double maxYaw, double minPitch, double maxPitch) {
+            this.minYaw = minYaw;
+            this.maxYaw = maxYaw;
+            this.minPitch = minPitch;
+            this.maxPitch = maxPitch;
+            return this;
+        }
+
+        public String getPageTitle() {
+            return pageTitle;
+        }
+
+        public String getPanoTitle() {
+            return panoTitle;
+        }
+
+        public String getPanoAuthor() {
+            return panoAuthor;
         }
 
         public String getBasePath() {
@@ -69,6 +121,30 @@ public class IndexHtmGeneratorPannellum extends IndexHtmlGenerator {
 
         public long getCubeResolution() {
             return cubeResolution;
+        }
+
+        public double getMinYaw() {
+            return minYaw;
+        }
+
+        public double getMaxYaw() {
+            return maxYaw;
+        }
+
+        public double getMinPitch() {
+            return minPitch;
+        }
+
+        public double getMaxPitch() {
+            return maxPitch;
+        }
+
+        public boolean isAutoLoad() {
+            return autoLoad;
+        }
+
+        public double getAutoRotate() {
+            return autoRotate;
         }
 
         @Override

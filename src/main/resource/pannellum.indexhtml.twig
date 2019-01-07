@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ v.title }}</title>
+    <title>{{ v.pageTitle }}</title>
     <link rel="stylesheet" href="https://cdn.pannellum.org/2.4/pannellum.css"/>
     <script type="text/javascript" src="https://cdn.pannellum.org/2.4/pannellum.js"></script>
     <style>
@@ -21,6 +21,15 @@
         "type": "multires",
         "autoRotate": 1,
         "autoLoad": true,
+        "title": "{{ v.panoTitle }}",
+        "author": "{{ v.author }}",
+        "autoLoad": {{ v.autoLoad }},
+        "autoRotate": {{ v.autoRotate }},
+
+        "minYaw": {{ v.minYaw }},
+        "maxYaw": {{ v.maxYaw }},
+        "minPitch": {{ v.minPitch }},
+        "maxPitch": {{ v.maxPitch }},
         "multiRes": {
             "basePath": "{{ v.basePath }}",
             "path": "{{ v.path }}",

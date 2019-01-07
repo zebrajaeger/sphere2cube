@@ -24,12 +24,17 @@ public class AppPannellum extends App {
 
     protected void process(String[] args) throws IOException, ImageProcessingException {
 
+        boolean dryRun = true;
+        boolean tileDebug = true;
+
         File sourceFile = new File("samples/test.psb");
         //File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");
         File root = new File("target/pano");
         File tileRoot = new File(root, "tiles");
 
-        clean(root);
+        if (!dryRun) {
+            clean(root);
+        }
 
         // read image
         // TODO check that all needed values are available (at last fovX and fovY)
@@ -37,29 +42,39 @@ public class AppPannellum extends App {
         startTask("Load source image");
         ViewCalculator.PanoView panoView = findView(sourceFile);
         SourceImage source = SourceImage.of(sourceFile).fov(panoView);
+        LOG.info(panoView.toString());
         stopTask();
 
         // preview
-        preview(source, new File(root, "preview.jpg"));
+        if (!dryRun) {
+            preview(source, new File(root, "preview.jpg"));
+        }
 
         // render tiles
         startTask("Render tile");
-        RenderedPano renderedPano = renderTiles(tileRoot, source, PannellumTileNameGenerator.of(), false, false);
+        RenderedPano renderedPano = renderTiles(
+                tileRoot,
+                source,
+                PannellumTileNameGenerator.of(),
+                dryRun,
+                tileDebug,
+                false);
         stopTask();
 
         // index.html
         File indexHtmlFile = new File(root, "index.html");
         startTask("Create index.html");
-        String indexHtml = IndexHtmGeneratorPannellum.of().generate(
-                new IndexHtmGeneratorPannellum.IndexHtml(
-                        "TestPano",
-                        "tiles",
-                        "/%l/%s/%y_%x",
-                        "png",
-                        512,
-                        renderedPano.getMaxLevel().getIndex(),
-                        renderedPano.getMaxLevel().getTargetEdge())
-        );
+        String indexHtml = IndexHtmGeneratorPannellum
+                .of()
+                .generate(
+                        IndexHtmGeneratorPannellum.IndexHtml
+                                .of()
+                                .path("tiles", "/%l/%s/%y_%x", "png")
+                                .resolution(renderedPano.getMaxLevel().getTargetEdge(), 512, renderedPano.getMaxLevel().getIndex())
+                                .fov(panoView.getFovX1(), panoView.getFovX2(), panoView.getFovY1Inv(), panoView.getFovY2Inv())
+                                .meta("test", "test", "Lars")
+                                .auto(true, 1)
+                );
         FileUtils.write(indexHtmlFile, indexHtml, StandardCharsets.UTF_8);
         stopTask();
 

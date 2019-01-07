@@ -30,8 +30,8 @@ public class AppPannellum extends App {
         boolean server = true;
         boolean tileDebug = false;
 
-        File sourceFile = new File("samples/test.psb");
-        //File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");
+        //File sourceFile = new File("samples/test.psb");
+        File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");
         File root = new File("target/pano");
         File tileRoot = new File(root, "tiles");
 

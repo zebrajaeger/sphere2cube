@@ -284,21 +284,21 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
 
         // Level/Face text
         int textHeight = g.getFontMetrics().getHeight();
-        String text = String.format("%02d x %sd", trf.getLevel(), trf.getFace().toString());
+        String text = String.format("%02d / %s", trf.getLevel(), trf.getFace().toString());
         int textWidth = g.getFontMetrics().stringWidth(text);
         int textCenterY = ((trf.getTileEdgeY() - textHeight) / 2);
-        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY - (int)(2.5* textHeight));
+        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY - (int)(1.5* textHeight));
 
         // index text
         text = String.format("%04d x %04d", trf.getTileCountX(), trf.getTileCountY());
         textWidth = g.getFontMetrics().stringWidth(text);
         textCenterY = ((trf.getTileEdgeY() - textHeight) / 2);
-        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY - textHeight);
+        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY );
 
         // size text
         text = String.format("%04d x %04d", trf.getTileEdgeX(), trf.getTileEdgeY());
         textWidth = g.getFontMetrics().stringWidth(text);
-        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY + textHeight);
+        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY + (int)(2.5 * textHeight));
 
         g.setColor(originalColor);
         g.setStroke(originalStroke);

@@ -100,16 +100,13 @@ public class Sphere2Cube {
         int maxTargetEdge = 4 * sourceEdge / 3;
 
         // TODO move up
-        // level with best resolution hat highest layer number. So ee need the number and count down to 1
+        // level with best resolution hat highest layer number. So we need the number and count down to 1
         int targetEdge = maxTargetEdge;
-        int maxLevel = 0;
+        int maxLevel = 1;
         while (targetEdge > tileEdge) {
             targetEdge /= 2;
             ++maxLevel;
         }
-
-        // at least one level
-        maxLevel = Math.max(1, maxLevel);
 
         // render
         targetEdge = maxTargetEdge;
@@ -166,6 +163,6 @@ public class Sphere2Cube {
             ++x;
         }
 
-        return new Level(layer, targetEdge, targetEdge, x, y);
+        return new Level(layer, targetEdge, targetEdge, targetEdge, x, y);
     }
 }

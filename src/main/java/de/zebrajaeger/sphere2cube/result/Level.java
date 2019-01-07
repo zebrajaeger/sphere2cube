@@ -8,13 +8,15 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  */
 public class Level {
     private int index;
+    private int targetEdge;
     private int w;
     private int h;
     private int tilesX;
     private int tilesY;
 
-    public Level(int index, int w, int h, int tilesX, int tilesY) {
+    public Level(int index, int targetEdge, int w, int h, int tilesX, int tilesY) {
         this.index = index;
+        this.targetEdge = targetEdge;
         this.w = w;
         this.h = h;
         this.tilesX = tilesX;
@@ -39,6 +41,10 @@ public class Level {
 
     public int getTilesY() {
         return tilesY;
+    }
+
+    public int getTargetEdge() {
+        return targetEdge;
     }
 
     @Override

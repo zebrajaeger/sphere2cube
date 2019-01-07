@@ -14,7 +14,7 @@ public class PannellumTileNameGenerator extends GenericTileNameGenerator {
     }
 
     public PannellumTileNameGenerator() {
-        super("%l/%s%y_%x.png");
+        super("%l/%s/%y_%x.png");
     }
 
     public String generateName(String pattern, Face face, int layer, int countX, int x, int countY, int y) {

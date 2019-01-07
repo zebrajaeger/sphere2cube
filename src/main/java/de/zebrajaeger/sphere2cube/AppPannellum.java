@@ -50,11 +50,11 @@ public class AppPannellum extends App {
                 new IndexHtmGeneratorPannellum.IndexHtml(
                         "TestPano",
                         "tiles",
-                        "/%l/%s%y_%x",
+                        "/%l/%s/%y_%x",
                         "png",
                         512,
                         renderedPano.getMaxLevel().getIndex(),
-                        renderedPano.getMaxLevel().getW())
+                        renderedPano.getMaxLevel().getTargetEdge())
         );
         FileUtils.write(indexHtmlFile, indexHtml, StandardCharsets.UTF_8);
         stopTask();

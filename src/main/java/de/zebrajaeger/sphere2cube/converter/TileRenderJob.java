@@ -3,6 +3,7 @@ package de.zebrajaeger.sphere2cube.converter;
 import de.zebrajaeger.sphere2cube.img.ISourceImage;
 import de.zebrajaeger.sphere2cube.img.ITargetImage;
 import de.zebrajaeger.sphere2cube.img.TargetImage;
+import net.jafama.FastMath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,17 +183,17 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
         }
 
         //outImgToXYZ(xyz, i, j, face, targetEdge);
-        double theta = Math.atan2(y, x);
-        double r = Math.hypot(x, y);
-        double phi = Math.atan2(z, r);
+        double theta = FastMath.atan2(y, x);
+        double r = FastMath.hypot(x, y);
+        double phi = FastMath.atan2(z, r);
 
         // source img coords
         double uf = (2d * sourceEdge * (theta + PI) / PI);
         double vf = (2D * sourceEdge * (PI / 2d - phi) / PI);
 
         // Use bilinear interpolation between the four surrounding pixels
-        int ui = (int) Math.floor(uf);  // coord of pixel to bottom left
-        int vi = (int) Math.floor(vf);
+        int ui = (int) FastMath.floor(uf);  // coord of pixel to bottom left
+        int vi = (int) FastMath.floor(vf);
         int u2 = ui + 1;       // coords of pixel to top right
         int v2 = vi + 1;
         double mu = uf - (double) ui;      // fraction of way across pixel
@@ -281,17 +282,22 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
         g.setColor(borderColor);
         g.setFont(new Font("Verdana", Font.BOLD, 30));
 
-        // index text
-        String text = String.format("%04d x %04d", trf.getTileCountX(), trf.getTileCountY());
-        int textWidth = g.getFontMetrics().stringWidth(text);
+        // Level/Face text
         int textHeight = g.getFontMetrics().getHeight();
+        String text = String.format("%02d x %sd", trf.getLevel(), trf.getFace().toString());
+        int textWidth = g.getFontMetrics().stringWidth(text);
         int textCenterY = ((trf.getTileEdgeY() - textHeight) / 2);
+        g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY - (int)(2.5* textHeight));
+
+        // index text
+        text = String.format("%04d x %04d", trf.getTileCountX(), trf.getTileCountY());
+        textWidth = g.getFontMetrics().stringWidth(text);
+        textCenterY = ((trf.getTileEdgeY() - textHeight) / 2);
         g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY - textHeight);
 
         // size text
         text = String.format("%04d x %04d", trf.getTileEdgeX(), trf.getTileEdgeY());
         textWidth = g.getFontMetrics().stringWidth(text);
-        textHeight = g.getFontMetrics().getHeight();
         g.drawString(text, (trf.getTileEdgeX() - textWidth) / 2, textCenterY + textHeight);
 
         g.setColor(originalColor);

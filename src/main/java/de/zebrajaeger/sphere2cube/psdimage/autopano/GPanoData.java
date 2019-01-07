@@ -79,7 +79,7 @@ public class GPanoData {
         }
 
         final Node desc = XmlUtils.findWithAttrubute(rdf, "rdf:Description", "xmlns:GPano");
-        if (rdf == desc) {
+        if (desc==null || rdf == desc) {
             return;
         }
 

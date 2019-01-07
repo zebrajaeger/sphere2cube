@@ -24,8 +24,8 @@ public class AppPannellum extends App {
 
     protected void process(String[] args) throws IOException, ImageProcessingException {
 
-        boolean dryRun = true;
-        boolean tileDebug = true;
+        boolean dryRun = false;
+        boolean tileDebug = false;
 
         File sourceFile = new File("samples/test.psb");
         //File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");

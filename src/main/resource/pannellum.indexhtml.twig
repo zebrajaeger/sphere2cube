@@ -19,13 +19,17 @@
 <script>
     pannellum.viewer('panorama', {
         "type": "multires",
+        "autoRotate": 1,
+        "autoLoad": true,
         "multiRes": {
             "basePath": "{{ v.basePath }}",
             "path": "{{ v.path }}",
             "extension": "{{ v.extension }}",
             "tileResolution": {{ v.tileResolution }},
             "maxLevel": {{ v.maxLevel }},
-            "cubeResolution": {{ v.cubeResolution }}
+            "cubeResolution": {{ v.cubeResolution }},
+            "autoLoad": true,
+            "autorotate": 1
         }
     });
 </script>

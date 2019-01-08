@@ -189,7 +189,7 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
 
         // source img coords
         double uf = (2d * sourceEdge * (theta + PI) / PI);
-        double vf = (2D * sourceEdge * (PI / 2d - phi) / PI);
+        double vf = (2d * sourceEdge * (PI / 2d - phi) / PI);
 
         // Use bilinear interpolation between the four surrounding pixels
         int ui = (int) FastMath.floor(uf);  // coord of pixel to bottom left

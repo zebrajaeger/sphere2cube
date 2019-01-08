@@ -82,15 +82,16 @@ public abstract class App {
                     }
                 })
                 .noRenderConsumer(trf -> {
-                    File target = new File(tileRoot, tileNameGenerator.generateName(trf.getTileRenderInfo()));
-                    try {
-                        blackImageGenerator.writeToFile(
-                                trf.getTileRenderInfo().getTileEdgeX(),
-                                trf.getTileRenderInfo().getTileEdgeY(),
-                                target);
-                    } catch (IOException e) {
-                        LOG.error("Could not save tile: '{}'", target.getAbsolutePath(), e);
-                    }
+                    System.out.print(".");
+//                    File target = new File(tileRoot, tileNameGenerator.generateName(trf.getTileRenderInfo()));
+//                    try {
+//                        blackImageGenerator.writeToFile(
+//                                trf.getTileRenderInfo().getTileEdgeX(),
+//                                trf.getTileRenderInfo().getTileEdgeY(),
+//                                target);
+//                    } catch (IOException e) {
+//                        LOG.error("Could not save tile: '{}'", target.getAbsolutePath(), e);
+//                    }
                 })
                 .renderPano(source, 512);
     }

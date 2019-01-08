@@ -4,6 +4,7 @@ import com.drew.imaging.ImageProcessingException;
 import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;
 import de.zebrajaeger.sphere2cube.img.SourceImage;
 import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGeneratorPannellum;
+import de.zebrajaeger.sphere2cube.jocl.JoclCalculatorManager;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
 import de.zebrajaeger.sphere2cube.tilenamegenerator.PannellumTileNameGenerator;
 import org.apache.commons.io.FileUtils;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 @SuppressWarnings("Duplicates")
 public class AppPannellum extends App {
     private static final Logger LOG = LoggerFactory.getLogger(AppPannellum.class);
+    public static final int TILE_RESOLUTION = 512;
 
     public static void main(String[] args) throws IOException, ImageProcessingException {
         new AppPannellum().process(args);
@@ -30,8 +32,11 @@ public class AppPannellum extends App {
         boolean server = true;
         boolean tileDebug = false;
 
-        //File sourceFile = new File("samples/test.psb");
-        File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");
+        JoclCalculatorManager.getInstance().init(1,0, TILE_RESOLUTION*TILE_RESOLUTION);
+        JoclCalculatorManager.getInstance().getCalculator().init();
+
+        File sourceFile = new File("samples/test.psb");
+        //File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");
         File root = new File("target/pano");
         File tileRoot = new File(root, "tiles");
 
@@ -73,13 +78,15 @@ public class AppPannellum extends App {
                         IndexHtmGeneratorPannellum.IndexHtml
                                 .of()
                                 .path("tiles", "/%l/%s/%y_%x", "png")
-                                .resolution(renderedPano.getMaxLevel().getTargetEdge(), 512, renderedPano.getMaxLevel().getIndex())
+                                .resolution(renderedPano.getMaxLevel().getTargetEdge(), TILE_RESOLUTION, renderedPano.getMaxLevel().getIndex())
                                 .fov(panoView.getFovX1(), panoView.getFovX2(), panoView.getFovY1Inv(), panoView.getFovY2Inv())
                                 .meta("test", "test", "Lars")
                                 .auto(true, 1)
                 );
         FileUtils.write(indexHtmlFile, indexHtml, StandardCharsets.UTF_8);
         stopTask();
+
+        JoclCalculatorManager.getInstance().getCalculator().shutdown();
 
         finish();
 

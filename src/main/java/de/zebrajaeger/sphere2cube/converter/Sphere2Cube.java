@@ -154,7 +154,7 @@ public class Sphere2Cube {
 
                 // put to render-queue
                 if (!dryRun) {
-                    executor.submit(TileRenderJob
+                    executor.submit(TileRenderJobJocl
                             .of(trf, source)
                             .renderConsumer(renderConsumer)
                             .noRenderConsumer(noRenderConsumer)

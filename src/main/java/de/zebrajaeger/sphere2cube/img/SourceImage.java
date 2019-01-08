@@ -49,7 +49,7 @@ public class SourceImage implements ISourceImage {
     public SourceImage read(File file) throws IOException {
         this.file = file;
          BufferedImage img = ImageIO.read(file);
-        if (image == null) {
+        if (img == null) {
             throw new IllegalArgumentException("Could not read image: '" + file.getAbsolutePath() + "'");
         }
         image(img);
@@ -57,15 +57,16 @@ public class SourceImage implements ISourceImage {
     }
 
     protected SourceImage image(BufferedImage image){
-        raster = image.getRaster();
-        w = image.getWidth();
-        h = image.getHeight();
-        minX = 0;
-        maxX = image.getWidth();
-        minY = 0;
-        maxY = image.getHeight();
-        iW = image.getWidth();
-        iH = image.getHeight();
+        this.image = image;
+        this.raster = image.getRaster();
+        this.w = image.getWidth();
+        this.h = image.getHeight();
+        this.minX = 0;
+        this.maxX = image.getWidth();
+        this.minY = 0;
+        this.maxY = image.getHeight();
+        this.iW = image.getWidth();
+        this.iH = image.getHeight();
 
         return this;
     }

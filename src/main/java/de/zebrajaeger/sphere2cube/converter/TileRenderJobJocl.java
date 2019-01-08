@@ -86,7 +86,11 @@ public class TileRenderJobJocl implements Callable<TileRenderInfo> {
         calculator.calc(new JoclEdgeCalculationJob(
                 trf.getTileEdgeX(), trf.getFace(), trf.getTargetEdge(),
                 trf.getX1(), trf.getX2(), trf.getY1(), trf.getY2(),
-                invertX, invertY)).pixels(pixel -> withinSource.set(withinSource.get() || readBilinearPixel(pixel.getuV(), pixel.getfV(), pixelValue)));
+                invertX, invertY)).pixels(
+                pixel -> withinSource.set(withinSource.get() || readBilinearPixel(pixel.getuV(), pixel.getfV(), pixelValue))
+        );
+
+        withinSource.set(true);
 
         // render if precheck allowed and precheck match or n precheck
         if (trf.isForceTileRendering() || !trf.isPreCheck() || withinSource.get()) {

@@ -116,7 +116,7 @@ public class Sphere2Cube {
             }
             targetEdge /= 2;
             Stopwatch stopwatch = Stopwatch.fromNow();
-            currentImage = currentImage.createScaledInstance(currentImage.getOriginalW() / 2, currentImage.getOriginalW() / 4);
+            //currentImage = currentImage.createScaledInstance(currentImage.getOriginalW() / 2, currentImage.getOriginalW() / 4);
             LOG.info("Downscale in '{}'", stopwatch.stop().toHumanReadable());
         }
 

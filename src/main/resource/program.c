@@ -45,4 +45,6 @@ __kernel void sampleKernel( __global const int *face, __global const int *source
 
     uf[gid] = (2.0 * sourceEdge[gid] * (theta + PI) / PI);
     vf[gid] = (2.0 * sourceEdge[gid] * (PI / 2.0 - phi) / PI);
+    //uf[gid] = a[gid];
+    //vf[gid] = b[gid];
 }

@@ -58,14 +58,9 @@ public class JoclCalculator {
     private double[] srcArrayA;
     private double[] srcArrayB;
 
-    private double[] dstArrayUf;
-    private double[] dstArrayVf;
     private cl_command_queue commandQueue;
     private cl_kernel kernel;
     private long[] local_work_size;
-    private cl_mem[] memObjects;
-    private Pointer dstUf;
-    private Pointer dstVf;
     private cl_program program;
     private cl_context context;
 
@@ -80,14 +75,6 @@ public class JoclCalculator {
         srcArrayEdge = new int[maxN];
         srcArrayA = new double[maxN];
         srcArrayB = new double[maxN];
-
-        dstArrayUf = new double[maxN];
-        dstArrayVf = new double[maxN];
-
-        Pointer srcFace = Pointer.to(srcArrayFace);
-        Pointer srcEdge = Pointer.to(srcArrayEdge);
-        Pointer srcA = Pointer.to(srcArrayA);
-        Pointer srcB = Pointer.to(srcArrayB);
 
         // Enable exceptions and subsequently omit error checks in this sample
         CL.setExceptionsEnabled(true);
@@ -122,16 +109,6 @@ public class JoclCalculator {
         // Create a command-queue for the selected device
         commandQueue = clCreateCommandQueueWithProperties(context, device, null, null);
 
-        // Allocate the memory objects for the input- and output data
-        memObjects = new cl_mem[6];
-        memObjects[0] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int * maxN, srcFace, null);
-        memObjects[1] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int * maxN, srcEdge, null);
-        memObjects[2] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_double * maxN, srcA, null);
-        memObjects[3] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_double * maxN, srcB, null);
-
-        memObjects[4] = clCreateBuffer(context, CL_MEM_READ_WRITE, Sizeof.cl_double * maxN, null, null);
-        memObjects[5] = clCreateBuffer(context, CL_MEM_READ_WRITE, Sizeof.cl_double * maxN, null, null);
-
         // Create the program from the source code
         InputStream r = this.getClass().getClassLoader().getResourceAsStream("program.c");
         String programStr = IOUtils.toString(r, StandardCharsets.UTF_8);
@@ -144,15 +121,8 @@ public class JoclCalculator {
         // Create the kernel
         kernel = clCreateKernel(program, "sampleKernel", null);
 
-        for (int i = 0; i < memObjects.length; ++i) {
-            clSetKernelArg(kernel, i, Sizeof.cl_mem, Pointer.to(memObjects[i]));
-        }
-
         // Set the work-item dimensions
         local_work_size = new long[]{1};
-
-        dstUf = Pointer.to(dstArrayUf);
-        dstVf = Pointer.to(dstArrayVf);
     }
 
     public void setFace(Face face) {
@@ -161,33 +131,52 @@ public class JoclCalculator {
 
     public synchronized JoclCalculationJob calc(JoclCalculationJob job) {
         int n = job.getGlobalWorkUnit();
-        long[]  global_work_size = new long[]{n};
+        long[] global_work_size = new long[]{n};
 
-            Arrays.fill(srcArrayFace, job.getFace().getNr(),0,n);
-            job.fillSource(srcArrayA, srcArrayB);
+        Arrays.fill(srcArrayFace, job.getFace().getNr(), 0, n);
+        job.fillSource(srcArrayA, srcArrayB);
 
-            Arrays.fill(dstArrayUf, 66.66);
-            Arrays.fill(dstArrayVf, 77.77);
+        double[] dstArrayUf = new double[maxN];
+        double[] dstArrayVf = new double[maxN];
 
-            // Execute the kernel
-            clEnqueueNDRangeKernel(commandQueue, kernel, 1, null, global_work_size, local_work_size, 0, null, null);
-            clEnqueueReadBuffer(commandQueue, memObjects[4], CL_TRUE, 0, this.maxN * Sizeof.cl_double, dstUf, 0, null, null);
-            clEnqueueReadBuffer(commandQueue, memObjects[5], CL_TRUE, 0, this.maxN * Sizeof.cl_double, dstVf, 0, null, null);
+        // Execute the kernel
+        Pointer srcFace = Pointer.to(srcArrayFace);
+        Pointer srcEdge = Pointer.to(srcArrayEdge);
+        Pointer srcA = Pointer.to(srcArrayA);
+        Pointer srcB = Pointer.to(srcArrayB);
 
-            double[] uv = new double[this.maxN];
-            System.arraycopy(dstArrayUf, 0, uv, 0, n);
-            double[] fv = new double[this.maxN];
-            System.arraycopy(dstArrayVf, 0, fv, 0, n);
-            job.setResult(uv, fv);
+        // Allocate the memory objects for the input- and output data
+        cl_mem[] memObjects= new cl_mem[6];
+        memObjects[0] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int * n, srcFace, null);
+        memObjects[1] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int * n, srcEdge, null);
+        memObjects[2] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_double * n, srcA, null);
+        memObjects[3] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_double * n, srcB, null);
 
-            return job;
+        memObjects[4] = clCreateBuffer(context, CL_MEM_READ_WRITE, Sizeof.cl_double * n, null, null);
+        memObjects[5] = clCreateBuffer(context, CL_MEM_READ_WRITE, Sizeof.cl_double * n, null, null);
+
+        for (int i = 0; i < memObjects.length; ++i) {
+            clSetKernelArg(kernel, i, Sizeof.cl_mem, Pointer.to(memObjects[i]));
+        }
+
+        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null, global_work_size, local_work_size, 0, null, null);
+
+        Pointer dstUf = Pointer.to(dstArrayUf);
+        Pointer dstVf = Pointer.to(dstArrayVf);
+        clEnqueueReadBuffer(commandQueue, memObjects[4], CL_TRUE, 0, n * Sizeof.cl_double, dstUf, 0, null, null);
+        clEnqueueReadBuffer(commandQueue, memObjects[5], CL_TRUE, 0, n * Sizeof.cl_double, dstVf, 0, null, null);
+
+        for (cl_mem memObject : memObjects) {
+            clReleaseMemObject(memObject);
+        }
+
+        job.setResult(dstArrayUf, dstArrayVf);
+
+        return job;
     }
 
     public void shutdown() {
         // Release kernel, program, and memory objects
-        for (cl_mem memObject : memObjects) {
-            clReleaseMemObject(memObject);
-        }
         clReleaseKernel(kernel);
         clReleaseProgram(program);
         clReleaseCommandQueue(commandQueue);

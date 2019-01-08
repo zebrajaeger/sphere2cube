@@ -56,50 +56,8 @@ public abstract class JoclCalculationJob {
 
     public abstract int getGlobalWorkUnit();
     public abstract void fillSource(double[] srcArrayA, double[] srcArrayB);
-//    {
-//        int i=0;
-//        for (int y = y1; y < y2; ++y) {
-//            for (int x = x1; x < x2; ++x) {
-//                double a = 2d * (double) x / targetEdge;
-//                if (invertX) {
-//                    a = 2d - a;
-//                }
-//                double b = 2d * (double) y / targetEdge;
-//                if (invertY) {
-//                    b = 2d - b;
-//                }
-//                srcArrayA[i] = a;
-//                srcArrayB[i] = b;
-//            }
-//        }
-//    }
-
     public abstract void pixels(Consumer<Result> result);
-//    {
-//        int i=0;
-//        Result r = new Result();
-//        for (int y = y1, yi = 0; y < y2; ++y, ++yi) {
-//            for (int x = x1, xi = 0; x < x2; ++x, ++x) {
-//                r.set(x, y, xi, yi, uv[i], fv[i]);
-//                result.accept(r);
-//            }
-//        }
-//    }
 
-//    private void edge(Consumer<Result> consumer, int x, int y, Result r) {
-//        int i = (tileSize * x) + y;
-//        consumer.accept(r.set(x, y, x1 + x, y1 + y, uv[i], fv[i]));
-//    }
-
-//    public void edges(Consumer<Result> consumer) {
-//        Result r = new Result();
-//        int ex = x2 - x1-1;
-//        int ey = y2 - y1-1;
-//        edge(consumer, 0, 0, r);
-//        edge(consumer, ex, 0, r);
-//        edge(consumer, 0, ey, r);
-//        edge(consumer, ex, ey, r);
-//    }
 
     public Face getFace() {
         return face;

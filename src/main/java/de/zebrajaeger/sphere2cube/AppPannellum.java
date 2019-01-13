@@ -32,11 +32,11 @@ public class AppPannellum extends App {
         boolean server = true;
         boolean tileDebug = false;
 
-        JoclCalculatorManager.getInstance().init(1,0, TILE_RESOLUTION*TILE_RESOLUTION);
+        JoclCalculatorManager.getInstance().init(0,0, TILE_RESOLUTION*TILE_RESOLUTION);
         JoclCalculatorManager.getInstance().getCalculator().init();
 
-        File sourceFile = new File("samples/test.psb");
-        //File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");
+        //File sourceFile = new File("samples/test.psb");
+        File sourceFile = new File("samples/sylvester[S][35.60x4.95(-14.99)].psb");
         File root = new File("target/pano");
         File tileRoot = new File(root, "tiles");
 

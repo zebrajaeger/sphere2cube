@@ -11,6 +11,7 @@ public abstract class JoclCalculationJob {
     private int tileSize;
 
     private Face face;
+    private double sourceEdge;
     private double targetEdge;
 
     private int x1;
@@ -21,14 +22,15 @@ public abstract class JoclCalculationJob {
     private boolean invertX;
     private boolean invertY;
 
-    private double[] uv;
-    private double[] fv;
+    private double[] uf;
+    private double[] vf;
     private final int w;
     private final int h;
 
-    public JoclCalculationJob(int tileSize, Face face, double targetEdge, int x1, int x2, int y1, int y2, boolean invertX, boolean invertY) {
+    public JoclCalculationJob(int tileSize, Face face, double sourceEdge, double targetEdge, int x1, int x2, int y1, int y2, boolean invertX, boolean invertY) {
         this.tileSize = tileSize;
         this.face = face;
+        this.sourceEdge = sourceEdge;
         this.targetEdge = targetEdge;
         this.x1 = x1;
         this.x2 = x2;
@@ -40,7 +42,7 @@ public abstract class JoclCalculationJob {
         h = y2 - y1;
     }
 
-    protected void setToSource(int i, int x, int y, double[] srcArrayA, double[] srcArrayB){
+    protected void setToSource(int i, int x, int y, double[] srcArrayA, double[] srcArrayB) {
         double a = 2d * (double) x / getTargetEdge();
         if (isInvertX()) {
             a = 2d - a;
@@ -53,23 +55,27 @@ public abstract class JoclCalculationJob {
         srcArrayB[i] = b;
     }
 
-
     public abstract int getGlobalWorkUnit();
-    public abstract void fillSource(double[] srcArrayA, double[] srcArrayB);
-    public abstract void pixels(Consumer<Result> result);
 
+    public abstract void fillSource(double[] srcArrayA, double[] srcArrayB);
+
+    public abstract void pixels(Consumer<Result> result);
 
     public Face getFace() {
         return face;
     }
 
-    public void setResult(double[] uv, double[] fv) {
-        this.uv = uv;
-        this.fv = fv;
+    public void setResult(double[] uf, double[] vf) {
+        this.uf = uf;
+        this.vf = vf;
     }
 
     public int getTileSize() {
         return tileSize;
+    }
+
+    public double getSourceEdge() {
+        return sourceEdge;
     }
 
     public double getTargetEdge() {
@@ -100,12 +106,12 @@ public abstract class JoclCalculationJob {
         return invertY;
     }
 
-    public double[] getUv() {
-        return uv;
+    public double[] getUf() {
+        return uf;
     }
 
-    public double[] getFv() {
-        return fv;
+    public double[] getVf() {
+        return vf;
     }
 
     public int getW() {

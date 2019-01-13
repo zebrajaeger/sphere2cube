@@ -74,6 +74,7 @@ public abstract class App {
                 .debug(tileDebug, tileDebugOverwriteContent)
                 .forceTileRenderingUpToLevel(2)
                 .renderConsumer(trf -> {
+                    System.out.print("#");
                     File target = new File(tileRoot, tileNameGenerator.generateName(trf.getTileRenderInfo()));
                     try {
                         trf.getTargetImage().save(target);
@@ -82,7 +83,7 @@ public abstract class App {
                     }
                 })
                 .noRenderConsumer(trf -> {
-                    System.out.print(".");
+                    //System.out.print(".");
 //                    File target = new File(tileRoot, tileNameGenerator.generateName(trf.getTileRenderInfo()));
 //                    try {
 //                        blackImageGenerator.writeToFile(

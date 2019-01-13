@@ -9,8 +9,8 @@ import java.util.function.Consumer;
  */
 public class JoclAllCalculationJob extends JoclCalculationJob {
 
-    public JoclAllCalculationJob(int tileSize, Face face, double targetEdge, int x1, int x2, int y1, int y2, boolean invertX, boolean invertY) {
-        super(tileSize, face, targetEdge, x1, x2, y1, y2, invertX, invertY);
+    public JoclAllCalculationJob(int tileSize, Face face, double sourceEdge, double targetEdge, int x1, int x2, int y1, int y2, boolean invertX, boolean invertY) {
+        super(tileSize, face, sourceEdge,targetEdge, x1, x2, y1, y2, invertX, invertY);
     }
 
     public int getGlobalWorkUnit() {
@@ -29,13 +29,13 @@ public class JoclAllCalculationJob extends JoclCalculationJob {
 
     public void pixels(Consumer<Result> result) {
         Result r = new Result();
-        double[] uv = getUv();
-        double[] fv = getFv();
+        double[] uv = getUf();
+        double[] vf = getVf();
 
         int i = 0;
         for (int y = getY1(), yi = 0; y < getY2(); ++y, ++yi) {
             for (int x = getX1(), xi = 0; x < getX2(); ++x, ++xi) {
-                r.set(x, y, xi, yi, uv[i], fv[i]);
+                r.set(x, y, xi, yi, uv[i], vf[i]);
                 result.accept(r);
                 ++i;
             }

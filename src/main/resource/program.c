@@ -1,4 +1,4 @@
-__kernel void sampleKernel( __global const int *face, __global const int *sourceEdge,
+__kernel void sampleKernel( __global const int *face, __global const double *sourceEdge,
                             __global const double *a, __global const double *b,
                             __global double *uf, __global double *vf) {
 
@@ -6,7 +6,7 @@ __kernel void sampleKernel( __global const int *face, __global const int *source
     const double PI = 3.14159265358979323846264338328;
 
     double x, y, z;
-    switch (face[gid]) {
+    switch (*face) {
         case 0:
             x = -1.0;
             y = 1.0 - a[gid];
@@ -40,11 +40,16 @@ __kernel void sampleKernel( __global const int *face, __global const int *source
     }
 
     double theta = atan2(y, x);
-    double r = hypot(x, y);
+    double r = hypot(x, z);
+    //double r2;
+    //for(int i=0; i<1000; ++i){
+    //     r2 = hypot(x, r2);
+    //}
     double phi = atan2(z, r);
-
-    uf[gid] = (2.0 * sourceEdge[gid] * (theta + PI) / PI);
-    vf[gid] = (2.0 * sourceEdge[gid] * (PI / 2.0 - phi) / PI);
-    //uf[gid] = a[gid];
-    //vf[gid] = b[gid];
+    double uf_ = (2.0 * *sourceEdge * (theta + PI) / PI);
+    double vf_ = (2.0 * *sourceEdge* (PI / 2.0 - phi) / PI);
+    //uf[gid] = (2.0 * sourceEdge[gid] * (theta + PI) / PI);
+    //vf[gid] = (2.0 * sourceEdge[gid] * (PI / 2.0 - phi) / PI);
+    uf[gid] = uf_ ;
+    vf[gid] = vf_;
 }

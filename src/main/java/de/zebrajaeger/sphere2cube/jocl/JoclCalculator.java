@@ -53,8 +53,6 @@ public class JoclCalculator {
     private final int deviceIndex;
     private final int maxN;
 
-    private int[] srcArrayFace;
-    private int[] srcArrayEdge;
     private double[] srcArrayA;
     private double[] srcArrayB;
 
@@ -71,8 +69,6 @@ public class JoclCalculator {
     }
 
     public void init() throws IOException {
-        srcArrayFace = new int[maxN];
-        srcArrayEdge = new int[maxN];
         srcArrayA = new double[maxN];
         srcArrayB = new double[maxN];
 
@@ -125,30 +121,72 @@ public class JoclCalculator {
         local_work_size = new long[]{1};
     }
 
-    public void setFace(Face face) {
-        Arrays.fill(srcArrayFace, face.getNr());
+
+    private void foo(int gid, int[] face, double[] sourceEdge, double[] a, double[] b) {
+        double x = 0, y = 0, z = 0;
+        switch (face[gid]) {
+            case 0:
+                x = -1.0;
+                y = 1.0 - a[gid];
+                z = 1.0 - b[gid];
+                break;
+            case 1:
+                x = a[gid] - 1.0;
+                y = -1.0;
+                z = 1.0 - b[gid];
+                break;
+            case 2:
+                x = 1.0;
+                y = a[gid] - 1.0;
+                z = 1.0 - b[gid];
+                break;
+            case 3:
+                x = 1.0 - a[gid];
+                y = 1.0;
+                z = 1.0 - b[gid];
+                break;
+            case 4:
+                x = 1.0 - b[gid];
+                y = a[gid] - 1.0;
+                z = 1.0;
+                break;
+            case 5:
+                x = 1.0 - b[gid];
+                y = a[gid] - 1.0;
+                z = -1.0;
+                break;
+        }
+
+        double theta = Math.atan2(y, x);
+        double r = Math.hypot(x, y);
+        double phi = Math.atan2(z, r);
+
+        double uf = (2.0 * sourceEdge[gid] * (theta + Math.PI) / Math.PI);
+        double vf = (2.0 * sourceEdge[gid] * (Math.PI / 2.0 - phi) / Math.PI);
+
+        System.out.println(gid + " -> x: " + x + ", y: " + y + ", z: " + z + ", theta: " + theta + ", r : " + r + ", phi: " + phi + ", uf: " + uf + ", vf: " + vf);
     }
 
-    public synchronized JoclCalculationJob calc(JoclCalculationJob job) {
+    public JoclCalculationJob calc(JoclCalculationJob job) {
         int n = job.getGlobalWorkUnit();
         long[] global_work_size = new long[]{n};
 
-        Arrays.fill(srcArrayFace, job.getFace().getNr(), 0, n);
         job.fillSource(srcArrayA, srcArrayB);
 
-        double[] dstArrayUf = new double[maxN];
-        double[] dstArrayVf = new double[maxN];
+//        for (int i = 0; i < n; ++i) {
+//            foo(i, srcArrayFace, srcArrayEdge, srcArrayA, srcArrayB);
+//        }
 
         // Execute the kernel
-        Pointer srcFace = Pointer.to(srcArrayFace);
-        Pointer srcEdge = Pointer.to(srcArrayEdge);
+        Pointer srcFace = Pointer.to(new int[]{job.getFace().getNr()});
+        Pointer srcEdge = Pointer.to(new double[]{job.getSourceEdge()});
         Pointer srcA = Pointer.to(srcArrayA);
         Pointer srcB = Pointer.to(srcArrayB);
 
         // Allocate the memory objects for the input- and output data
-        cl_mem[] memObjects= new cl_mem[6];
+        cl_mem[] memObjects = new cl_mem[6];
         memObjects[0] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int * n, srcFace, null);
-        memObjects[1] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int * n, srcEdge, null);
+        memObjects[1] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_double * n, srcEdge, null);
         memObjects[2] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_double * n, srcA, null);
         memObjects[3] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_double * n, srcB, null);
 
@@ -161,6 +199,8 @@ public class JoclCalculator {
 
         clEnqueueNDRangeKernel(commandQueue, kernel, 1, null, global_work_size, local_work_size, 0, null, null);
 
+        double[] dstArrayUf = new double[n];
+        double[] dstArrayVf = new double[n];
         Pointer dstUf = Pointer.to(dstArrayUf);
         Pointer dstVf = Pointer.to(dstArrayVf);
         clEnqueueReadBuffer(commandQueue, memObjects[4], CL_TRUE, 0, n * Sizeof.cl_double, dstUf, 0, null, null);

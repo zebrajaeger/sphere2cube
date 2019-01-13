@@ -11,7 +11,11 @@ import net.jafama.FastMath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -82,21 +86,26 @@ public class TileRenderJobJocl implements Callable<TileRenderInfo> {
 
         double[] pixelValue = new double[3];
 
+        //Stopwatch sw = Stopwatch.fromNow();
         final AtomicBoolean withinSource = new AtomicBoolean(false);
         calculator.calc(new JoclEdgeCalculationJob(
-                trf.getTileEdgeX(), trf.getFace(), trf.getTargetEdge(),
+                trf.getTileEdgeX(), trf.getFace(),
+                trf.getSourceEdge(), trf.getTargetEdge(),
                 trf.getX1(), trf.getX2(), trf.getY1(), trf.getY2(),
                 invertX, invertY)).pixels(
                 pixel -> withinSource.set(withinSource.get() || readBilinearPixel(pixel.getuV(), pixel.getfV(), pixelValue))
         );
+        //LOG.info(sw.stop().toHumanReadable());
 
-        withinSource.set(true);
+        //withinSource.set(true);
 
         // render if precheck allowed and precheck match or n precheck
         if (trf.isForceTileRendering() || !trf.isPreCheck() || withinSource.get()) {
+            LOG.info("!!!!!");
             withinSource.set(false);
             calculator.calc(new JoclAllCalculationJob(
-                    trf.getTileEdgeX(), trf.getFace(), trf.getTargetEdge(),
+                    trf.getTileEdgeX(), trf.getFace(),
+                    trf.getSourceEdge(), trf.getTargetEdge(),
                     trf.getX1(), trf.getX2(), trf.getY1(), trf.getY2(),
                     invertX, invertY)).pixels(pixel -> {
                 withinSource.set(withinSource.get() || readBilinearPixel(pixel.getuV(), pixel.getfV(), pixelValue));
@@ -148,6 +157,7 @@ public class TileRenderJobJocl implements Callable<TileRenderInfo> {
         double mu = uf - (double) ui;      // fraction of way across pixel
         double nu = vf - (double) vi;
 
+        //System.out.println(ui + "," + vi);
         // Pixel values of four corners
         boolean insidePano = readPixel(ui, vi, p1);
         insidePano |= readPixel(u2, vi, p2);

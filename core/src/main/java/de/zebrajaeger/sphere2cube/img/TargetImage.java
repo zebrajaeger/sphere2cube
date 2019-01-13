@@ -1,10 +1,14 @@
 package de.zebrajaeger.sphere2cube.img;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import java.awt.*;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
@@ -50,13 +54,15 @@ public class TargetImage implements ITargetImage {
         ImageIO.write(image, format.getFormatName(), file);
     }
 
-    public void save(String filePath) throws IOException {
-        save(new File(filePath));
-    }
-
-    @Override
-    public void save(String filePath, Format format) throws IOException {
-        save(new File(filePath), format);
+    public void saveAsJPG(File file, float quality) throws IOException {
+        try (FileOutputStream os = new FileOutputStream(file)) {
+            ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+            ImageWriteParam writerParams = writer.getDefaultWriteParam();
+            writerParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            writerParams.setCompressionQuality(quality / 100f);
+            writer.setOutput(ImageIO.createImageOutputStream(os));
+            writer.write(null, new IIOImage(image, null, null), writerParams);
+        }
     }
 
     public Graphics2D getGraphics() {

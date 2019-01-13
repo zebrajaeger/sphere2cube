@@ -20,9 +20,7 @@ public interface ITargetImage {
 
     void save(File file, Format format) throws IOException;
 
-    void save(String filePath) throws IOException;
-
-    void save(String filePath, Format format) throws IOException;
+    void saveAsJPG(File file, float quality) throws IOException;
 
     enum Format {
         JPG("jpg"),

@@ -36,7 +36,7 @@
                         <!-- START SNIPPET: maven-plugin-lifecycle -->
                         <phases>
                             <compile>
-                                de.zebrajaeger:equirectangular-maven-plugin:0.0.1-SNAPSHOT:pano
+                                de.zebrajaeger:sphere2cube-maven-plugin:0.0.1-SNAPSHOT:pannellum
                             </compile>
                             <install>
                                 org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install

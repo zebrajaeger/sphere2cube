@@ -18,7 +18,7 @@ public class IndexHtmGeneratorPannellum extends IndexHtmlGenerator {
     }
 
     public String generate(IndexHtml indexHtml) throws IOException {
-        return generate("pannellum.indexhtml.twig", indexHtml);
+        return generate("pannellum.index.html.twig", indexHtml);
     }
 
     /**

@@ -1,28 +1,21 @@
 package de.zebrajaeger.sphere2cube.plugin;
 
 import com.drew.imaging.ImageProcessingException;
-import de.zebrajaeger.sphere2cube.BlackImageGenerator;
 import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;
-import de.zebrajaeger.sphere2cube.converter.Sphere2Cube;
 import de.zebrajaeger.sphere2cube.img.ITargetImage;
 import de.zebrajaeger.sphere2cube.img.ImgScaler;
 import de.zebrajaeger.sphere2cube.img.SourceImage;
-import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGeneratorPannellum;
-import de.zebrajaeger.sphere2cube.result.RenderedPano;
-import de.zebrajaeger.sphere2cube.tilenamegenerator.PannellumTileNameGenerator;
 import de.zebrajaeger.sphere2cube.utils.Utils;
-import org.apache.commons.io.FileUtils;
+import de.zebrajaeger.sphere2cube.utils.ZipUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -35,65 +28,50 @@ import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings("unused")
-@Mojo(name = "pano", requiresProject = false, defaultPhase = LifecyclePhase.COMPILE)
-public class PanoMojo extends AbstractMojo {
+public abstract class PanoMojo extends AbstractMojo {
 
     @Component
-    private MojoExecution execution;
+    protected MojoExecution execution;
 
     @Parameter(property = "sourceDirectory", defaultValue = "${project.basedir}/src")
-    private File sourceDirectory;
+    protected File sourceDirectory;
     @Parameter(property = "sourceGlob", defaultValue = "*.{psd,psb}")
-    private String sourceGlob;
+    protected String sourceGlob;
 
     @Parameter(property = "generatePreview", defaultValue = "true")
-    private boolean generatePreview;
-//    @Parameter(property = "overwritePreviewIfExists", defaultValue = "false")
+    protected boolean generatePreview;
+    //    @Parameter(property = "overwritePreviewIfExists", defaultValue = "false")
 //    private boolean overwritePreviewIfExists;
     @Parameter(property = "previewFile", defaultValue = "${project.build.directory}/preview.jpg")
-    private File previewFile;
+    protected File previewFile;
     @Parameter(property = "previewQuality", defaultValue = "80")
-    private int previewQuality;
+    protected int previewQuality;
+    @Parameter(property = "previewMaxEdgeSize", defaultValue = "1024")
+    protected int previewMaxEdgeSize;
+    @Parameter(property = "previewCanScaleUp", defaultValue = "false")
+    protected boolean previewCanScaleUp;
 
-    @Parameter(property = "generatePannellum", defaultValue = "true")
-    private boolean generatePannellum;
-//    @Parameter(property = "overwritePannellumIfExists", defaultValue = "false")
-//    private boolean overwritePannellumIfExists;
-    @Parameter(property = "pannellumTileSize", defaultValue = "512")
-    private int pannellumTileSize;
-    @Parameter(property = "pannellumTargetFolder", defaultValue = "${project.build.directory}")
-    private File pannellumTargetFolder;
-    @Parameter(property = "pannellumPageTitle", defaultValue = "Page Title")
-    private String pannellumPageTitle;
-    @Parameter(property = "pannellumPanoTitle")
-    private String pannellumPanoTitle;
-    @Parameter(property = "pannellumPanoAuthor")
-    private String pannellumPanoAuthor;
-
-//    @Parameter(property = "generatePano", defaultValue = "true")
-//    private boolean generatePano;
-//    @Parameter(property = "overwritePanoIfExists", defaultValue = "false")
+    //    @Parameter(property = "overwritePanoIfExists", defaultValue = "false")
 //    private boolean overwritePanoIfExists;
-//    @Parameter(property = "panoTargetFolder", defaultValue = "${project.build.directory}")
-//    private File panoTargetFolder;
-//    @Parameter(property = "krPanoExe", defaultValue = "${krpano.exe}")
-//    private File krPanoExe;
-//    @Parameter(property = "krPanoConfig", defaultValue = "${krpano.config}")
-//    private File krPanoConfig;
-//    @Parameter(property = "krPanoRenderTimeout", defaultValue = "7200")
-//    private long krPanoRenderTimeout;
+    @Parameter(property = "targetFolder", defaultValue = "${project.build.directory}")
+    protected File targetFolder;
+    @Parameter(property = "tileSize", defaultValue = "512")
+    protected int tileSize;
+    @Parameter(property = "pageTitle", defaultValue = "Page Title")
+    protected String pageTitle;
 
     @Parameter(property = "generateZip", defaultValue = "true")
-    private boolean generateZip;
-    @Parameter(property = "overwriteZipIfExists", defaultValue = "false")
-    private boolean overwriteZipIfExists;
-    @Parameter(property = "zipTargetFolder", defaultValue = "${project.build.directory}")
-    private File zipTargetFolder;
+    protected boolean generateZip;
+    //    @Parameter(property = "overwriteZipIfExists", defaultValue = "false")
+//    private boolean overwriteZipIfExists;
+//    @Parameter(property = "zipTargetFolder", defaultValue = "${project.build.directory}")
+//    protected File zipTargetFolder;
 
-//    @Parameter(property = "modifyPanoConfig", defaultValue = "true")
-//    private boolean modifyPanoConfig;
+    protected abstract void createPano(SourceImage sourceImage, ViewCalculator.PanoView panoView) throws IOException;
 
     public void execute() throws MojoExecutionException {
+
+        targetFolder.mkdirs();
 
         List<File> sourceImages;
         try {
@@ -139,75 +117,50 @@ public class PanoMojo extends AbstractMojo {
         return result;
     }
 
-    ViewCalculator.PanoView findView(File sourceFile) throws IOException, ImageProcessingException {
+    private ViewCalculator.PanoView findView(File sourceFile) throws IOException, ImageProcessingException {
         return ViewCalculator
                 .of(sourceFile)
                 .createPanoView()
                 .orElseThrow(() -> new IllegalArgumentException("Can not extract viewdata from input image: '" + sourceFile.getAbsolutePath() + "'"));
     }
 
-    private void handleSourceImage(File sourceImage) throws MojoExecutionException, IOException, ImageProcessingException {
+    private void handleSourceImage(File sourceImage) throws IOException, ImageProcessingException {
+        getLog().info("Load image: '" + sourceImage.getAbsolutePath() + "'");
+
         ViewCalculator.PanoView panoView = findView(sourceImage);
         SourceImage source = SourceImage.of(sourceImage).fov(panoView);
 
+        // PREVIEW
         if (generatePreview) {
+            getLog().info("Generate preview at: '" + previewFile.getAbsolutePath() + "'");
+            previewFile.getParentFile().mkdirs();
             ITargetImage.Format imageFormat = Utils
                     .findImageFormat(previewFile.getName())
                     .orElseThrow(() -> new UnsupportedOperationException("No Writer for image-format available"));
 
             ITargetImage targetImage = ImgScaler
                     .of(source)
-                    .scaleTo(1024, false);
+                    .scaleTo(previewMaxEdgeSize, previewCanScaleUp);
             if (ITargetImage.Format.JPG.equals(imageFormat)) {
                 targetImage.saveAsJPG(previewFile, previewQuality);
             } else {
                 targetImage.save(previewFile, imageFormat);
             }
+            getLog().info("review result is: '" + previewFile.getAbsolutePath() + "");
         }
 
-        if (generatePannellum) {
-            PannellumTileNameGenerator tileNameGenerator = PannellumTileNameGenerator.of();
-            BlackImageGenerator blackImageGenerator = BlackImageGenerator.of()
-            RenderedPano renderedPano = Sphere2Cube
-                    .of()
-                    .debug(false, false)
-                    .forceTileRenderingUpToLevel(2)
-                    .renderConsumer(trf -> {
-                        File target = new File(pannellumTargetFolder, tileNameGenerator.generateName(trf.getTileRenderInfo()));
-                        try {
-                            trf.getTargetImage().save(target);
-                        } catch (IOException e) {
-                            getLog().error(String.format("Could not save tile: '%s'", target.getAbsolutePath()), e);
-                        }
-                    })
-                    .noRenderConsumer(trf -> {
-                        File target = new File(pannellumTargetFolder, tileNameGenerator.generateName(trf.getTileRenderInfo()));
-                        try {
-                            blackImageGenerator.writeToFile(
-                                    trf.getTileRenderInfo().getTileEdgeX(),
-                                    trf.getTileRenderInfo().getTileEdgeY(),
-                                    target);
-                        } catch (IOException e) {
-                            getLog().error(String.format("Could not save tile: '{}'", target.getAbsolutePath()), e);
-                        }
-                    })
-                    .renderPano(source, pannellumTileSize);
+        // Pano (tiles, index.html, config etc.)
+        getLog().info("Generate tiles, index.html, config etc");
+        createPano(source, panoView);
 
-            File indexHtmlFile = new File(pannellumTargetFolder, "index.html");
-            String indexHtml = IndexHtmGeneratorPannellum
-                    .of()
-                    .generate(
-                            IndexHtmGeneratorPannellum.IndexHtml
-                                    .of()
-                                    .path("tiles", "/%l/%s/%y_%x", "png")
-                                    .resolution(renderedPano.getMaxLevel().getTargetEdge(), 512, renderedPano.getMaxLevel().getIndex())
-                                    .fov(panoView.getFovX1(), panoView.getFovX2(), panoView.getFovY1Inv(), panoView.getFovY2Inv())
-                                    .meta(pannellumPageTitle, pannellumPanoTitle, pannellumPanoAuthor)
-                                    .auto(true, 1)
-                    );
-            FileUtils.write(indexHtmlFile, indexHtml, StandardCharsets.UTF_8);
+        // ZIP
+        if (generateZip) {
+            File zipFile = new File(targetFolder.getParent(), FilenameUtils.removeExtension(sourceImage.getName() + ".zip"));
+            getLog().info("Generate zip archive at: '" + zipFile.getAbsolutePath() + "'");
+            targetFolder.mkdirs();
+            ZipUtils.compressDirectory(
+                    targetFolder,
+                    zipFile);
         }
-
-
     }
 }

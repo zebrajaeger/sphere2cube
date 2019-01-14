@@ -113,7 +113,7 @@ public class TileRenderJob implements Callable<TileRenderInfo> {
                     renderDebugInfo(target, trf);
                 }
                 renderConsumer.accept(new TileRenderResult(trf, target));
-                LOG.info("       Rendered in {}ms ", System.currentTimeMillis() - timestamp);
+                LOG.debug("       Rendered in {}ms ", System.currentTimeMillis() - timestamp);
             } else {
                 noRenderConsumer.accept(new TileRenderResult(trf, target));
             }

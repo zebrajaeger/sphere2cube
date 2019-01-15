@@ -160,7 +160,7 @@ public abstract class PanoMojo extends AbstractMojo {
 
         // ZIP
         if (generateZip) {
-            File zipFile = new File(targetFolder.getParent(), FilenameUtils.removeExtension(sourceImage.getName() + ".zip"));
+            File zipFile = new File(targetFolder.getParent(), FilenameUtils.removeExtension(sourceImage.getName()) + ".zip");
             getLog().info("Generate zip archive at: '" + zipFile.getAbsolutePath() + "'");
             targetFolder.mkdirs();
             ZipUtils.compressDirectory(

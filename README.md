@@ -24,5 +24,5 @@
   * Prevents to keep all the empty image tiles in partial panoramas (with a httpserver that can handle this)
   * Generator for all dummy-Image sizes  
 * CLI Interface
-* As Maven Plugin
+* ~~As Maven Plugin~~
 * UI (Simple Droptarget)

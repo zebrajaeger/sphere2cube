@@ -4,11 +4,8 @@ import de.zebrajaeger.sphere2cube.BlackImageGenerator;
 import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;
 import de.zebrajaeger.sphere2cube.converter.Sphere2Cube;
 import de.zebrajaeger.sphere2cube.img.SourceImage;
-import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGeneratorKrPano;
 import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGeneratorPannellum;
-import de.zebrajaeger.sphere2cube.panoxml.PanoXmlGenerator;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
-import de.zebrajaeger.sphere2cube.result.View;
 import de.zebrajaeger.sphere2cube.tilenamegenerator.PannellumTileNameGenerator;
 import de.zebrajaeger.sphere2cube.tilenamegenerator.TileNameGenerator;
 import org.apache.commons.io.FileUtils;
@@ -40,12 +37,12 @@ public class PannellumMojo extends PanoMojo {
     private File krPanoSkinFolder;
 
     @Override
-    protected void createPano(SourceImage sourceImage, ViewCalculator.PanoView panoView) throws IOException {
+    protected void createPano(String imageName, SourceImage sourceImage, ViewCalculator.PanoView panoView) throws IOException {
         if (generateTiles || generatePage) {
             // Tiles
-            BlackImageGenerator blackImageGenerator = BlackImageGenerator.of();
+            BlackImageGenerator finalBlackImageGenerator = BlackImageGenerator.of();
             TileNameGenerator finalTileNameGenerator = PannellumTileNameGenerator.of();
-            File finalPanoTargetFolder = targetFolder;
+            File finalPanoTargetFolder = convertAndCreateDirectories(tilesFolder, imageName, false);
             RenderedPano renderedPano = Sphere2Cube
                     .of()
                     .debug(false, false)
@@ -62,7 +59,7 @@ public class PannellumMojo extends PanoMojo {
                     .noRenderConsumer(trf -> {
                         File target = new File(finalPanoTargetFolder, finalTileNameGenerator.generateName(trf.getTileRenderInfo()));
                         try {
-                            blackImageGenerator.writeToFile(
+                            finalBlackImageGenerator.writeToFile(
                                     trf.getTileRenderInfo().getTileEdgeX(),
                                     trf.getTileRenderInfo().getTileEdgeY(),
                                     target);
@@ -74,7 +71,7 @@ public class PannellumMojo extends PanoMojo {
 
             // page - pannellum
             if (generatePage) {
-                File indexHtmlFile = new File(targetFolder, "index.html");
+                File convertedPageFile = convertAndCreateDirectories(pageFile, imageName, true);
                 String indexHtml = IndexHtmGeneratorPannellum
                         .of()
                         .generate(
@@ -86,7 +83,7 @@ public class PannellumMojo extends PanoMojo {
                                         .meta(pageTitle, pannellumPanoTitle, pannellumPanoAuthor)
                                         .auto(true, 1)
                         );
-                FileUtils.write(indexHtmlFile, indexHtml, StandardCharsets.UTF_8);
+                FileUtils.write(convertedPageFile, indexHtml, StandardCharsets.UTF_8);
             }
 
             // page - krpano

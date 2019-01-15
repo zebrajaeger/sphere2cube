@@ -26,7 +26,7 @@ public class KrPanoMojo extends PanoMojo {
     private boolean modifyKrPanoConfig;
 
     @Override
-    protected void createPano(SourceImage sourceImage, ViewCalculator.PanoView panoView) throws IOException {
+    protected void createPano(String imageName, SourceImage sourceImage, ViewCalculator.PanoView panoView) throws IOException {
         // TODO implement me
     }
 }

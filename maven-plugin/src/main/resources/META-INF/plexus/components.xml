@@ -38,12 +38,9 @@
                             <compile>
                                 de.zebrajaeger:sphere2cube-maven-plugin:0.0.1-SNAPSHOT:pannellum
                             </compile>
-                            <install>
-                                org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install
-                            </install>
-                            <deploy>
-                                org.apache.maven.plugins:maven-deploy-plugin:3.0.0-M1:deploy
-                            </deploy>
+                            <package>
+                                de.zebrajaeger:sphere2cube-maven-plugin:0.0.1-SNAPSHOT:zip
+                            </package>
                         </phases>
                         <!-- END SNIPPET: maven-plugin-lifecycle -->
                     </lifecycle>

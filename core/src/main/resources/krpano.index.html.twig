@@ -16,12 +16,12 @@
 </head>
 <body>
 
-<script src="{{ values.panoJs }}"></script>
+<script src="{{ v.panoJs }}"></script>
 
 <div id="pano" style="width:100%;height:100%;">
     <noscript><table style="width:100%;height:100%;"><tr style="vertical-align:middle;"><td><div style="text-align:center;">ERROR:<br/><br/>Javascript not activated<br/><br/></div></td></tr></table></noscript>
     <script>
-        embedpano({xml:"{{ values.panoXml }}", target:"pano", html5:"only", mobilescale:1.0, passQueryParameters:true});
+        embedpano({xml:"{{ v.panoXml }}", target:"pano", html5:"only", mobilescale:1.0, passQueryParameters:true});
     </script>
 </div>
 

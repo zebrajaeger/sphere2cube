@@ -53,10 +53,15 @@ public abstract class PanoMojo extends AbstractMojo {
 
     //    @Parameter(property = "overwritePanoIfExists", defaultValue = "false")
 //    private boolean overwritePanoIfExists;
+    @Parameter(property = "generateTiles", defaultValue = "true")
+    protected boolean generateTiles;
     @Parameter(property = "targetFolder", defaultValue = "${project.build.directory}")
     protected File targetFolder;
     @Parameter(property = "tileSize", defaultValue = "512")
     protected int tileSize;
+
+    @Parameter(property = "generatePage", defaultValue = "true")
+    protected boolean generatePage;
     @Parameter(property = "pageTitle", defaultValue = "Page Title")
     protected String pageTitle;
 

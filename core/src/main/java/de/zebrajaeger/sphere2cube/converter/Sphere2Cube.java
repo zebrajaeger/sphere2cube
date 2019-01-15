@@ -25,7 +25,7 @@ public class Sphere2Cube {
 
     private Consumer<TileRenderResult> renderConsumer;
     private Consumer<TileRenderResult> noRenderConsumer;
-    private boolean dryRun;
+    private boolean renderTiles = true;
     private boolean tileDebug;
     private boolean tileDebugOverwriteContent;
     private int forceTileRenderingUpToLevel = 0;
@@ -52,8 +52,8 @@ public class Sphere2Cube {
         return this;
     }
 
-    public Sphere2Cube dryRun(boolean dryRun) {
-        this.dryRun = dryRun;
+    public Sphere2Cube renderTiles(boolean renderTiles) {
+        this.renderTiles = renderTiles;
         return this;
     }
 
@@ -108,15 +108,18 @@ public class Sphere2Cube {
         ISourceImage currentImage = source;
         targetEdge = maxTargetEdge;
         for (int level = maxLevel; level > 0; --level) {
+            Level l = null;
             for (Face face : Face.values()) {
                 LOG.info("Render Level: '{}' Face: '{}')", level, face);
-                Level l = renderLayer(executor, source, face, level, sourceEdge, targetEdge, tileEdge);
+                l = renderLayer(executor, source, face, level, sourceEdge, targetEdge, tileEdge);
                 LOG.info("    -> '{}' image(s)", l.getImageCount());
-                result.add(l);
             }
+            result.add(l);
             targetEdge /= 2;
             Stopwatch stopwatch = Stopwatch.fromNow();
-            currentImage = currentImage.createScaledInstance(currentImage.getOriginalW() / 2, currentImage.getOriginalW() / 4);
+            if (renderTiles) {
+                currentImage = currentImage.createScaledInstance(currentImage.getOriginalW() / 2, currentImage.getOriginalW() / 4);
+            }
             LOG.info("Downscale in '{}'", stopwatch.stop().toHumanReadable());
         }
 
@@ -153,7 +156,7 @@ public class Sphere2Cube {
                         .edgeSizes(sourceEdge, targetEdge, tileEdge, tileEdge);
 
                 // put to render-queue
-                if (!dryRun) {
+                if (renderTiles) {
                     executor.submit(TileRenderJob
                             .of(trf, source)
                             .renderConsumer(renderConsumer)

@@ -70,7 +70,7 @@ public abstract class App {
                                        boolean tileDebugOverwriteContent) {
         return Sphere2Cube
                 .of()
-                .dryRun(dryRun)
+                .renderTiles(dryRun)
                 .debug(tileDebug, tileDebugOverwriteContent)
                 .forceTileRenderingUpToLevel(2)
                 .renderConsumer(trf -> {

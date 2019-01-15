@@ -6,15 +6,13 @@
     <!-- view settings -->
     <view hlookat="{{pano.view.hlookat}}" vlookat="{{pano.view.vlookat}}" maxpixelzoom="{{pano.view.maxpixelzoom}}" fovmax="{{pano.view.fovmax}}" limitview="{{pano.view.limitview}}" />
 
-
-    <preview url="tiles/preview.jpg" />
+    <!-- TODO <preview url="tiles/preview.jpg" /> -->
 
     <image type="{{ pano.type.label }}" multires="{{ pano.multires }}" tilesize="{{ pano.tileSize }}">
         {% for level in pano.levels %}
         <level tiledimagewidth="{{ level.w }}" tiledimageheight="{{ level.h }}">
-            <cube url="tiles/%s/l{{ level.index }}/%000v_%000h.png" />
+            <cube url="tiles/{{ level.index }}/%s/%y_%x.png" />
         </level>
         {% endfor %}
     </image>
-
 </krpano>

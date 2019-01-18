@@ -3,6 +3,8 @@ package de.zebrajaeger.sphere2cube.plugin;
 import de.zebrajaeger.sphere2cube.BlackImageGenerator;
 import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;
 import de.zebrajaeger.sphere2cube.converter.Sphere2Cube;
+import de.zebrajaeger.sphere2cube.httpserver.PanoImage;
+import de.zebrajaeger.sphere2cube.httpserver.PanoImages;
 import de.zebrajaeger.sphere2cube.img.SourceImage;
 import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGeneratorPannellum;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
@@ -36,10 +38,17 @@ public class PannellumMojo extends PanoMojo {
     @Parameter(property = "krPanoSkinFolder")
     private File krPanoSkinFolder;
 
+    @Parameter(property = "generateImageInfoFile", defaultValue = "true")
+    protected boolean generateImageInfoFile;
+    @Parameter(property = "imageInfoFile", defaultValue = "${project.build.directory}/{{imageName}}/images.json")
+    protected String imageInfoFile;
+
     @Override
     protected void createPano(String imageName, SourceImage sourceImage, ViewCalculator.PanoView panoView) throws IOException {
         if (generateTiles || generatePage) {
             // Tiles
+            PanoImages panoImages = new PanoImages();
+
             BlackImageGenerator finalBlackImageGenerator = BlackImageGenerator.of();
             TileNameGenerator finalTileNameGenerator = PannellumTileNameGenerator.of();
             File finalPanoTargetFolder = convertAndCreateDirectories(tilesFolder, imageName, false);
@@ -49,7 +58,15 @@ public class PannellumMojo extends PanoMojo {
                     .renderTiles(generateTiles)
                     .forceTileRenderingUpToLevel(2)
                     .renderConsumer(trf -> {
-                        File target = new File(finalPanoTargetFolder, finalTileNameGenerator.generateName(trf.getTileRenderInfo()));
+                        String name = finalTileNameGenerator.generateName(trf.getTileRenderInfo());
+                        if (generateImageInfoFile) {
+                            panoImages.add(new PanoImage(
+                                    name,
+                                    false,
+                                    trf.getTileRenderInfo().getTileEdgeX(),
+                                    trf.getTileRenderInfo().getTileEdgeY()));
+                        }
+                        File target = new File(finalPanoTargetFolder, name);
                         try {
                             trf.getTargetImage().save(target);
                         } catch (IOException e) {
@@ -57,7 +74,15 @@ public class PannellumMojo extends PanoMojo {
                         }
                     })
                     .noRenderConsumer(trf -> {
-                        File target = new File(finalPanoTargetFolder, finalTileNameGenerator.generateName(trf.getTileRenderInfo()));
+                        String name = finalTileNameGenerator.generateName(trf.getTileRenderInfo());
+                        if (generateImageInfoFile) {
+                            panoImages.add(new PanoImage(
+                                    name,
+                                    true,
+                                    trf.getTileRenderInfo().getTileEdgeX(),
+                                    trf.getTileRenderInfo().getTileEdgeY()));
+                        }
+                        File target = new File(finalPanoTargetFolder, name);
                         try {
                             finalBlackImageGenerator.writeToFile(
                                     trf.getTileRenderInfo().getTileEdgeX(),
@@ -68,6 +93,11 @@ public class PannellumMojo extends PanoMojo {
                         }
                     })
                     .renderPano(sourceImage, tileSize);
+
+            // imageinfo
+            if (generateImageInfoFile) {
+                panoImages.save(convertAndCreateDirectories(imageInfoFile, imageName, true));
+            }
 
             // page - pannellum
             if (generatePage) {

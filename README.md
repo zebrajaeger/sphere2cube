@@ -65,7 +65,7 @@ imagename - extension + ".yaml"
   * https://stackoverflow.com/questions/24745147/java-resize-image-without-losing-quality
   * ~~For pano~~
   * ~~For preview~~ 
-* File which contains information which image has content and which is only a black dummy (and Size)
+* ~~~File which contains information which image has content and which is only a black dummy (and Size)~~~
   * Prevents to keep all the empty image tiles in partial panoramas (with a httpserver that can handle this)
   * Generator for all dummy-Image sizes  
 * CLI Interface

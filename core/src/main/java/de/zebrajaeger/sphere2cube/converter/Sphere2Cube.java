@@ -83,8 +83,11 @@ public class Sphere2Cube {
         try {
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
-            // nothing to do
+            LOG.warn("INTERRUPTED", e);
+            Thread.currentThread().interrupt();
         }
+
+        LOG.warn(executor.toString());
 
         return renderedPano;
     }

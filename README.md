@@ -9,6 +9,51 @@
 
 * http://photopin.com/free-photos/equirectangular
 
+## Description
+
+### JSON
+imagename - extension + ".json"
+
+    {
+      "title": "foo",
+      "description": "bar",
+      "created": "22.02.2019 10:33",
+      "tags": [
+        "urlaub",
+        "blah",
+        "meep",
+        "narf"
+      ]
+    }
+
+### XML
+imagename - extension + ".xml"
+
+    <description>
+        <title>foo</title>
+        <description>foo</description>
+        <created>22.02.2019 10:33</created>
+        <tags>
+            <tag>urlaub</tag>
+            <tag>blah</tag>
+            <tag>meep</tag>
+            <tag>narf</tag>
+        </tags>
+    </description>
+
+
+### YAML
+imagename - extension + ".yaml"
+
+    title: foo
+    description: bar
+    created: 22.02.2019 10:33
+    tags:
+      - urlaub
+      - blah
+      - meep
+      - narf
+      
 ## TODO (top items are more important)
 * Zip Result folder
 * ~~Autopano Giga PSD/PSB info reader~~

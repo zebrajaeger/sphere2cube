@@ -35,6 +35,12 @@
                         <id>default</id>
                         <!-- START SNIPPET: maven-plugin-lifecycle -->
                         <phases>
+                            <validate>
+                                de.zebrajaeger:sphere2cube-maven-plugin:0.0.1-SNAPSHOT:checkDescription
+                            </validate>
+                            <process-resources>
+                                de.zebrajaeger:sphere2cube-maven-plugin:0.0.1-SNAPSHOT:copyDescription
+                            </process-resources>
                             <compile>
                                 de.zebrajaeger:sphere2cube-maven-plugin:0.0.1-SNAPSHOT:pannellum
                             </compile>

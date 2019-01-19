@@ -40,6 +40,9 @@ public class IndexHtmGeneratorPannellum extends IndexHtmlGenerator {
         private double minPitch = -90;
         private double maxPitch = -90;
 
+        private double maxHfov = 120; // pannellum default value
+        private double hfov = 100; // pannellum default value
+
         private boolean autoLoad = false;
         private double autoRotate = 0d;
 
@@ -84,6 +87,11 @@ public class IndexHtmGeneratorPannellum extends IndexHtmlGenerator {
             this.maxYaw = maxYaw;
             this.minPitch = minPitch;
             this.maxPitch = maxPitch;
+
+            double hf = Math.abs(maxPitch - minPitch);
+            maxHfov = Math.min(maxHfov, hf);
+            hfov =  Math.min(hfov, hf);
+
             return this;
         }
 
@@ -145,6 +153,14 @@ public class IndexHtmGeneratorPannellum extends IndexHtmlGenerator {
 
         public double getAutoRotate() {
             return autoRotate;
+        }
+
+        public double getMaxHfov() {
+            return maxHfov;
+        }
+
+        public double getHfov() {
+            return hfov;
         }
 
         @Override

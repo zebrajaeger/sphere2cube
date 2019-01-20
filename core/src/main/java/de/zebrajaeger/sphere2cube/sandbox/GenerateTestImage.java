@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.sandbox;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;

@@ -24,9 +24,11 @@ public class ZipMojo extends BaseMojo {
     @Override
     protected void handleSourceImage(File sourceImage) throws IOException {
         String imageName = FileUtils.removeExtension(sourceImage.getName());
+        TemplateEngine te = TemplateEngine.of().with("imageName", imageName);
+
         if (generateZip) {
-            File convertedZipFile = convertAndCreateDirectories(zipFile, imageName, true);
-            File convertedZipSourceDirectory = convertAndCreateDirectories(zipSourceDirectory, imageName, false);
+            File convertedZipFile = te.convertToFileAndCreateDirectories(zipFile, true);
+            File convertedZipSourceDirectory = te.convertToFileAndCreateDirectories(zipSourceDirectory, false);
             getLog().info("Generate zip archive at: '" + convertedZipFile.getAbsolutePath() + "'");
             ZipUtils.compressDirectory(
                     convertedZipSourceDirectory,

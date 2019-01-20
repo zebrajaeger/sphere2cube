@@ -23,8 +23,10 @@ public class CopyDescrptionMojo extends DescriptionMojo {
     @Override
     protected void handleDescription(File sourceImage, Description xmlDescription, Description jsonDescription, Description yamlDescription) throws IOException {
         if (xmlDescription != null || jsonDescription != null || yamlDescription != null) {
-            String sourceImageName = FilenameUtils.removeExtension(sourceImage.getName());
-            File descriptionFile = convertAndCreateDirectories(this.descriptionFile, sourceImageName, true);
+            String imageName = FilenameUtils.removeExtension(sourceImage.getName());
+
+            TemplateEngine te = TemplateEngine.of().with("imageName", imageName);
+            File descriptionFile = te.convertToFileAndCreateDirectories(this.descriptionFile,true);
 
             Description description = new Description().merge(xmlDescription).merge(jsonDescription).merge(yamlDescription);
             getLoader().save(descriptionFile, description);

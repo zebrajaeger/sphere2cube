@@ -47,15 +47,17 @@ public abstract class PanoMojo extends BaseMojo {
     protected abstract void createPano(String imageName, SourceImage sourceImage, ViewCalculator.PanoView panoView) throws IOException;
 
     protected void handleSourceImage(File sourceImage) throws IOException, ImageProcessingException {
-        getLog().info("Load image: '" + sourceImage.getAbsolutePath() + "'");
         String imageName = FileUtils.removeExtension(sourceImage.getName());
+        TemplateEngine te = TemplateEngine.of().with("imageName", imageName);
+
+        getLog().info("Load image: '" + sourceImage.getAbsolutePath() + "'");
 
         ViewCalculator.PanoView panoView = findView(sourceImage);
         SourceImage source = SourceImage.of(sourceImage).fov(panoView);
 
         // PREVIEW
         if (generatePreview) {
-            File convertedPreviewFile = convertAndCreateDirectories(previewFile, imageName, true);
+            File convertedPreviewFile = te.convertToFileAndCreateDirectories(previewFile, true);
             getLog().info("Generate preview at: '" + convertedPreviewFile.getAbsolutePath() + "'");
             convertedPreviewFile.getParentFile().mkdirs();
             ITargetImage.Format imageFormat = Utils

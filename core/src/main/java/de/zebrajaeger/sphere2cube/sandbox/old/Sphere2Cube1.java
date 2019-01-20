@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube.converter.old;
+package de.zebrajaeger.sphere2cube.sandbox.old;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

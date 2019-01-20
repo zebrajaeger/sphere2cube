@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.blackimages;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;

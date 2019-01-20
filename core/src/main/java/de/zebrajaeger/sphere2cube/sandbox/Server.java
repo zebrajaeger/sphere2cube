@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.sandbox;
 
 import de.zebrajaeger.sphere2cube.httpserver.StaticWebServer;
 import org.slf4j.Logger;

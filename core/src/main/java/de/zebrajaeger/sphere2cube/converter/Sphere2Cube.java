@@ -27,6 +27,7 @@ public class Sphere2Cube {
     private Consumer<TileRenderResult> noRenderConsumer;
     private boolean renderTiles = true;
     private boolean tileDebug;
+    private boolean downscale;
     private boolean tileDebugOverwriteContent;
     private int forceTileRenderingUpToLevel = 0;
 
@@ -54,6 +55,11 @@ public class Sphere2Cube {
 
     public Sphere2Cube renderTiles(boolean renderTiles) {
         this.renderTiles = renderTiles;
+        return this;
+    }
+
+    public Sphere2Cube downscale(boolean downscale) {
+        this.downscale = downscale;
         return this;
     }
 
@@ -119,11 +125,18 @@ public class Sphere2Cube {
             }
             result.add(l);
             targetEdge /= 2;
-            Stopwatch stopwatch = Stopwatch.fromNow();
-            if (renderTiles) {
-                currentImage = currentImage.createScaledInstance(currentImage.getOriginalW() / 2, currentImage.getOriginalW() / 4);
+
+            // possible downscale
+            if (downscale && renderTiles) {
+                int ow = currentImage.getOriginalW();
+                int newW = ow / 2;
+                int newH = ow / 4;
+
+                LOG.info("Downscale from {}x{} to {}x{}", ow, (ow / 2), newW, newH);
+                Stopwatch stopwatch = Stopwatch.fromNow();
+                currentImage = currentImage.createScaledInstance(newW, newH);
+                LOG.info("Downscaled in '{}'", stopwatch.stop().toHumanReadable());
             }
-            LOG.info("Downscale in '{}'", stopwatch.stop().toHumanReadable());
         }
 
         return result;

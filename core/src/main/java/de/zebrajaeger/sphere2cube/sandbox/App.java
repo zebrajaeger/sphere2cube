@@ -1,7 +1,8 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.sandbox;
 
 import com.drew.imaging.ImageProcessingException;
 import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;
+import de.zebrajaeger.sphere2cube.blackimages.BlackImageGenerator;
 import de.zebrajaeger.sphere2cube.converter.Sphere2Cube;
 import de.zebrajaeger.sphere2cube.httpserver.StaticWebServer;
 import de.zebrajaeger.sphere2cube.img.ISourceImage;
@@ -35,7 +36,7 @@ public abstract class App {
         LOG.info("Task '{}' finished in {}", currentTask, stopwatch.stop().toHumanReadable());
     }
 
-    void clean(File root) throws IOException {
+    protected void clean(File root) throws IOException {
         // clean
         startTask("Clean");
         FileUtils.deleteDirectory(root);
@@ -43,14 +44,14 @@ public abstract class App {
         stopTask();
     }
 
-    ViewCalculator.PanoView findView(File sourceFile) throws IOException, ImageProcessingException {
+    protected ViewCalculator.PanoView findView(File sourceFile) throws IOException, ImageProcessingException {
         return ViewCalculator
                 .of(sourceFile)
                 .createPanoView()
                 .orElseThrow(() -> new IllegalArgumentException("Can not extract viewdata from input image: '" + sourceFile.getAbsolutePath() + "'"));
     }
 
-    void preview(ISourceImage source, File previewFile) throws IOException {
+    protected void preview(ISourceImage source, File previewFile) throws IOException {
         startTask("Create preview");
         ITargetImage.Format imageFormat = Utils
                 .findImageFormat(previewFile.getName())
@@ -95,11 +96,11 @@ public abstract class App {
                 .renderPano(source, 512);
     }
 
-    void server(File root) throws IOException {
+    protected void server(File root) throws IOException {
         server(root, null);
     }
 
-    void server(File root, File darkImage) throws IOException {
+    protected void server(File root, File darkImage) throws IOException {
         LOG.info("Start http server with docroot: '{}'", root.getAbsolutePath());
         StaticWebServer.of(root)
                 .darkImage(darkImage)
@@ -107,7 +108,7 @@ public abstract class App {
                 .openBrowser();
     }
 
-    void finish() {
+    protected void finish() {
         LOG.info(blackImageGenerator.toString());
     }
 }

@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube;
+package de.zebrajaeger.sphere2cube.sandbox;
 
 import com.drew.imaging.ImageProcessingException;
 import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;

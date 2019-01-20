@@ -1,10 +1,12 @@
 package de.zebrajaeger.sphere2cube.plugin;
 
-import de.zebrajaeger.sphere2cube.BlackImageGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.zebrajaeger.sphere2cube.autopanogiga.ViewCalculator;
+import de.zebrajaeger.sphere2cube.blackimages.BlackImageGenerator;
+import de.zebrajaeger.sphere2cube.blackimages.ImagesAndSizes;
+import de.zebrajaeger.sphere2cube.blackimages.PanoImage;
+import de.zebrajaeger.sphere2cube.blackimages.PanoImages;
 import de.zebrajaeger.sphere2cube.converter.Sphere2Cube;
-import de.zebrajaeger.sphere2cube.httpserver.PanoImage;
-import de.zebrajaeger.sphere2cube.httpserver.PanoImages;
 import de.zebrajaeger.sphere2cube.img.SourceImage;
 import de.zebrajaeger.sphere2cube.indexhtml.IndexHtmGeneratorPannellum;
 import de.zebrajaeger.sphere2cube.result.RenderedPano;
@@ -18,6 +20,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Lars Brandt, Silpion IT Solutions GmbH
@@ -26,6 +30,12 @@ import java.nio.charset.StandardCharsets;
 @Mojo(name = "pannellum", requiresProject = false, defaultPhase = LifecyclePhase.COMPILE)
 public class PannellumMojo extends PanoMojo {
 
+    @SuppressWarnings("Unused")
+    @Parameter(property = "pannellumSaveImages", defaultValue = "false") // TODO change me to true
+    private boolean pannellumSaveImages;
+    @SuppressWarnings("Unused")
+    @Parameter(property = "pannellumDownscaleOriginal", defaultValue = "false") // TODO change me to true
+    private boolean pannellumDownscaleOriginal;
     @SuppressWarnings("Unused")
     @Parameter(property = "pannellumPanoTitle")
     private String pannellumPanoTitle;
@@ -43,65 +53,109 @@ public class PannellumMojo extends PanoMojo {
     @Parameter(property = "imageInfoFile", defaultValue = "${project.build.directory}/{{imageName}}/images.json")
     protected String imageInfoFile;
 
+    @Parameter(property = "generateBlackImageReferences", defaultValue = "true")
+    protected boolean generateBlackImageReferences;
+    @Parameter(property = "blackImagesInfoFile", defaultValue = "${project.build.directory}/{{imageName}}/images.black.json")
+    protected String blackImagesInfoFile;
+    @Parameter(property = "blackImagesFilesRoot", defaultValue = "${project.build.directory}/{{imageName}}")
+    protected String blackImagesFilesRoot;
+    @Parameter(property = "blackImagesFileName", defaultValue = "tiles/black/{{w}}x{{h}}.png")
+    protected String blackImagesFileName;
+
     @Override
     protected void createPano(String imageName, SourceImage sourceImage, ViewCalculator.PanoView panoView) throws IOException {
+        TemplateEngine te = TemplateEngine.of().with("imageName", imageName);
+
         if (generateTiles || generatePage) {
             // Tiles
             PanoImages panoImages = new PanoImages();
 
             BlackImageGenerator finalBlackImageGenerator = BlackImageGenerator.of();
             TileNameGenerator finalTileNameGenerator = PannellumTileNameGenerator.of();
-            File finalPanoTargetFolder = convertAndCreateDirectories(tilesFolder, imageName, false);
+            File finalPanoTargetFolder = te.convertToFileAndCreateDirectories(tilesFolder, false);
+            AtomicLong count = new AtomicLong(0);
+
             RenderedPano renderedPano = Sphere2Cube
                     .of()
                     .debug(false, false)
                     .renderTiles(generateTiles)
                     .forceTileRenderingUpToLevel(2)
+                    .downscale(pannellumDownscaleOriginal)
                     .renderConsumer(trf -> {
                         String name = finalTileNameGenerator.generateName(trf.getTileRenderInfo());
+                        count.incrementAndGet();
                         if (generateImageInfoFile) {
-                            panoImages.add(new PanoImage(
-                                    name,
-                                    false,
-                                    trf.getTileRenderInfo().getTileEdgeX(),
-                                    trf.getTileRenderInfo().getTileEdgeY()));
+                            panoImages.add(new PanoImage(trf, name, PanoImage.Type.IMAGE));
                         }
-                        File target = new File(finalPanoTargetFolder, name);
-                        try {
-                            trf.getTargetImage().save(target);
-                        } catch (IOException e) {
-                            getLog().error(String.format("Could not save tile: '%s'", target.getAbsolutePath()), e);
+                        if (pannellumSaveImages) {
+                            File target = new File(finalPanoTargetFolder, name);
+                            try {
+                                trf.getTargetImage().save(target);
+                            } catch (IOException e) {
+                                getLog().error(String.format("Could not save tile: '%s'", target.getAbsolutePath()), e);
+                            }
                         }
                     })
                     .noRenderConsumer(trf -> {
                         String name = finalTileNameGenerator.generateName(trf.getTileRenderInfo());
+                        count.incrementAndGet();
                         if (generateImageInfoFile) {
-                            panoImages.add(new PanoImage(
-                                    name,
-                                    true,
-                                    trf.getTileRenderInfo().getTileEdgeX(),
-                                    trf.getTileRenderInfo().getTileEdgeY()));
+                            panoImages.add(new PanoImage(trf, name, PanoImage.Type.BLACK));
                         }
-                        File target = new File(finalPanoTargetFolder, name);
-                        try {
-                            finalBlackImageGenerator.writeToFile(
-                                    trf.getTileRenderInfo().getTileEdgeX(),
-                                    trf.getTileRenderInfo().getTileEdgeY(),
-                                    target);
-                        } catch (IOException e) {
-                            getLog().error(String.format("Could not save tile: '%s'", target.getAbsolutePath()), e);
+                        if (pannellumSaveImages) {
+                            File target = new File(finalPanoTargetFolder, name);
+                            try {
+                                finalBlackImageGenerator.writeToFile(
+                                        trf.getTileRenderInfo().getTileEdgeX(),
+                                        trf.getTileRenderInfo().getTileEdgeY(),
+                                        target);
+                            } catch (IOException e) {
+                                getLog().error(String.format("Could not save tile: '%s'", target.getAbsolutePath()), e);
+                            }
                         }
                     })
                     .renderPano(sourceImage, tileSize);
 
+            getLog().info("Images created: " + count);
+
             // imageinfo
+            panoImages.raster(layerFaceRaster -> {
+                getLog().info(String.format("---------- %s / %s ----------", layerFaceRaster.getLayer(), layerFaceRaster.getFace()));
+                getLog().info(layerFaceRaster.getRaster().toString());
+            });
+
+            ObjectMapper mapper = new ObjectMapper();
+            ImagesAndSizes imagesAndSizes =
+                    ImagesAndSizes.of(pi -> te.with("w", pi.getWidth()).with("h", pi.getHeight()).convert(blackImagesFileName))
+                            .panoImages(panoImages.getPanoImagesWithType(PanoImage.Type.BLACK));
             if (generateImageInfoFile) {
-                panoImages.save(convertAndCreateDirectories(imageInfoFile, imageName, true));
+                // all images
+                mapper.writeValue(te.convertToFileAndCreateDirectories(imageInfoFile, true), panoImages);
+
+                // black image list
+                mapper.writeValue(te.convertToFileAndCreateDirectories(blackImagesInfoFile, true), imagesAndSizes);
+            }
+
+            if (generateBlackImageReferences) {
+                // write black reference images
+                imagesAndSizes.getReferences().forEach(reference -> {
+                    File target = new File(te.convertToFile(blackImagesFilesRoot), reference.getPath());
+                    target.getParentFile();
+                    try {
+                        getLog().info("Create black reference file: '" + target.getAbsolutePath() + "'");
+                        finalBlackImageGenerator.writeToFile(
+                                reference.getW(),
+                                reference.getH(),
+                                target);
+                    } catch (IOException e) {
+                        getLog().error("Could not create black image: '" + target.getAbsolutePath() + "'", e);
+                    }
+                });
             }
 
             // page - pannellum
             if (generatePage) {
-                File convertedPageFile = convertAndCreateDirectories(pageFile, imageName, true);
+                File convertedPageFile = te.convertToFileAndCreateDirectories(pageFile, true);
                 String indexHtml = IndexHtmGeneratorPannellum
                         .of()
                         .generate(

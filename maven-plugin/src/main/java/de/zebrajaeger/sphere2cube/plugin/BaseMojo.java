@@ -29,7 +29,7 @@ public abstract class BaseMojo extends AbstractMojo {
 
     protected abstract void handleSourceImage(File sourceImage) throws IOException, ImageProcessingException;
 
-    protected File convertAndCreateDirectories(String templateString, String imageName, boolean isFile) {
+    private File convertAndCreateDirectories(String templateString, String imageName, boolean isFile) {
         JtwigTemplate template = JtwigTemplate.inlineTemplate(templateString);
         JtwigModel model = JtwigModel.newModel().with("imageName", imageName);
         File result = new File(template.render(model));

@@ -1,4 +1,4 @@
-package de.zebrajaeger.sphere2cube.converter.old;
+package de.zebrajaeger.sphere2cube.sandbox.old;
 
 import de.zebrajaeger.sphere2cube.img.ISourceImage;
 import de.zebrajaeger.sphere2cube.img.ITargetImage;

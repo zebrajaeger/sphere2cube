@@ -5,10 +5,11 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ImagesAndSizes {
@@ -16,10 +17,10 @@ public class ImagesAndSizes {
     @JsonIgnore
     private Function<PanoImage, String> nameGenerator;
     private AtomicInteger count = new AtomicInteger(0);
-    private List<Reference> references = new LinkedList<>();
-    private List<Image> images = new LinkedList<>();
+    private Map<Integer, Reference> references = new TreeMap<>();
+    private Map<String, Integer> images = new TreeMap<>();
 
-    public static ImagesAndSizes of(Function<PanoImage, String> nameGenerator){
+    public static ImagesAndSizes of(Function<PanoImage, String> nameGenerator) {
         return new ImagesAndSizes(nameGenerator);
     }
 
@@ -36,22 +37,22 @@ public class ImagesAndSizes {
 
     public ImagesAndSizes panoImage(PanoImage panoImage) {
         Reference reference = getReference(panoImage);
-        Image image = new Image(panoImage.getPath(), reference.id);
-        images.add(image);
+        images.put(panoImage.getPath(), reference.id);
         return this;
     }
 
     private Reference getReference(PanoImage panoImage) {
-        return references.stream().
-                filter(toTest -> toTest.getW() == panoImage.getWidth() && toTest.getH() == panoImage.getHeight())
+        return references.values()
+                .stream()
+                .filter(toTest -> toTest.getW() == panoImage.getWidth() && toTest.getH() == panoImage.getHeight())
                 .findFirst()
                 .orElseGet(() -> {
-                    Reference reference = new Reference(count.getAndIncrement(), panoImage.getWidth(), panoImage.getHeight(), nameGenerator.apply(panoImage));
-                    references.add(reference);
+                    int id = count.getAndIncrement();
+                    Reference reference = new Reference(id, panoImage.getWidth(), panoImage.getHeight(), nameGenerator.apply(panoImage));
+                    references.put(id, reference);
                     return reference;
                 });
     }
-
 
     public Function<PanoImage, String> getNameGenerator() {
         return nameGenerator;
@@ -61,11 +62,11 @@ public class ImagesAndSizes {
         return count;
     }
 
-    public List<Reference> getReferences() {
+    public Map<Integer, Reference> getReferences() {
         return references;
     }
 
-    public List<Image> getImages() {
+    public Map<String, Integer> getImages() {
         return images;
     }
 

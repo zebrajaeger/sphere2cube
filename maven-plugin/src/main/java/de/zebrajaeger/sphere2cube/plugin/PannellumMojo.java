@@ -20,8 +20,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * @author Lars Brandt, Silpion IT Solutions GmbH
@@ -31,8 +32,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class PannellumMojo extends PanoMojo {
 
     @SuppressWarnings("Unused")
-    @Parameter(property = "pannellumSaveImages", defaultValue = "false") // TODO change me to true
+    @Parameter(property = "pannellumSaveImages", defaultValue = "true") // TODO change me to true
     private boolean pannellumSaveImages;
+    @SuppressWarnings("Unused")
+    @Parameter(property = "pannellumSaveBlackImages", defaultValue = "false") // TODO change me to true
+    private boolean pannellumSaveBlackImages;
     @SuppressWarnings("Unused")
     @Parameter(property = "pannellumDownscaleOriginal", defaultValue = "false") // TODO change me to true
     private boolean pannellumDownscaleOriginal;
@@ -52,11 +56,13 @@ public class PannellumMojo extends PanoMojo {
     protected boolean generateImageInfoFile;
     @Parameter(property = "imageInfoFile", defaultValue = "${project.build.directory}/{{imageName}}/images.json")
     protected String imageInfoFile;
+    @Parameter(property = "blackImagesInfoFile", defaultValue = "${project.build.directory}/{{imageName}}/images.black.json")
+    protected String blackImagesInfoFile;
+    @Parameter(property = "contentImagesInfoFile", defaultValue = "${project.build.directory}/{{imageName}}/images.content.json")
+    protected String contentImagesInfoFile;
 
     @Parameter(property = "generateBlackImageReferences", defaultValue = "true")
     protected boolean generateBlackImageReferences;
-    @Parameter(property = "blackImagesInfoFile", defaultValue = "${project.build.directory}/{{imageName}}/images.black.json")
-    protected String blackImagesInfoFile;
     @Parameter(property = "blackImagesFilesRoot", defaultValue = "${project.build.directory}/{{imageName}}")
     protected String blackImagesFilesRoot;
     @Parameter(property = "blackImagesFileName", defaultValue = "tiles/black/{{w}}x{{h}}.png")
@@ -102,7 +108,7 @@ public class PannellumMojo extends PanoMojo {
                         if (generateImageInfoFile) {
                             panoImages.add(new PanoImage(trf, name, PanoImage.Type.BLACK));
                         }
-                        if (pannellumSaveImages) {
+                        if (pannellumSaveBlackImages) {
                             File target = new File(finalPanoTargetFolder, name);
                             try {
                                 finalBlackImageGenerator.writeToFile(
@@ -125,7 +131,8 @@ public class PannellumMojo extends PanoMojo {
             });
 
             ObjectMapper mapper = new ObjectMapper();
-            ImagesAndSizes imagesAndSizes =
+
+            ImagesAndSizes blackImagesAndSizes =
                     ImagesAndSizes.of(pi -> te.with("w", pi.getWidth()).with("h", pi.getHeight()).convert(blackImagesFileName))
                             .panoImages(panoImages.getPanoImagesWithType(PanoImage.Type.BLACK));
             if (generateImageInfoFile) {
@@ -133,12 +140,20 @@ public class PannellumMojo extends PanoMojo {
                 mapper.writeValue(te.convertToFileAndCreateDirectories(imageInfoFile, true), panoImages);
 
                 // black image list
-                mapper.writeValue(te.convertToFileAndCreateDirectories(blackImagesInfoFile, true), imagesAndSizes);
+                mapper.writeValue(te.convertToFileAndCreateDirectories(blackImagesInfoFile, true), blackImagesAndSizes);
+
+                // content image list
+                List<String> contentImageNamesList =
+                        panoImages.getPanoImagesWithType(PanoImage.Type.IMAGE)
+                        .stream()
+                        .map(panoImage -> panoImage.getPath())
+                        .collect(Collectors.toList());
+                mapper.writeValue(te.convertToFileAndCreateDirectories(contentImagesInfoFile, true), contentImageNamesList);
             }
 
             if (generateBlackImageReferences) {
                 // write black reference images
-                imagesAndSizes.getReferences().forEach(reference -> {
+                blackImagesAndSizes.getReferences().values().forEach(reference -> {
                     File target = new File(te.convertToFile(blackImagesFilesRoot), reference.getPath());
                     target.getParentFile();
                     try {

@@ -17,33 +17,38 @@
 
 <div id="panorama"></div>
 <script>
-    pannellum.viewer('panorama', {
-        "type": "multires",
-        "autoRotate": 1,
-        "autoLoad": true,
-        "title": "{{ v.panoTitle }}",
-        "author": "{{ v.author }}",
-        "autoLoad": {{ v.autoLoad }},
-        "autoRotate": {{ v.autoRotate }},
+    navigator.serviceWorker.register('sw.js')
+        .then((registration) => {
+            console.log("Registration ok", registration);
+            pannellum.viewer('panorama', {
+                "type": "multires",
+                "autoRotate": 1,
+                "autoLoad": true,
+                "title": "{{ v.panoTitle }}",
+                "author": "{{ v.author }}",
+                "autoLoad": {{ v.autoLoad }},
+                "autoRotate": {{ v.autoRotate }},
 
-        "minYaw": {{ v.minYaw }},
-        "maxYaw": {{ v.maxYaw }},
-        "minPitch": {{ v.minPitch }},
-        "maxPitch": {{ v.maxPitch }},
-        "maxHfov": {{ v.maxHfov }},
-        "hfov": {{ v.hfov }},
+                "minYaw": {{ v.minYaw }},
+                "maxYaw": {{ v.maxYaw }},
+                "minPitch": {{ v.minPitch }},
+                "maxPitch": {{ v.maxPitch }},
+                "maxHfov": {{ v.maxHfov }},
+                "hfov": {{ v.hfov }},
 
-        "multiRes": {
-            "basePath": "{{ v.basePath }}",
-            "path": "{{ v.path }}",
-            "extension": "{{ v.extension }}",
-            "tileResolution": {{ v.tileResolution }},
-            "maxLevel": {{ v.maxLevel }},
-            "cubeResolution": {{ v.cubeResolution }},
-            "autoLoad": true,
-            "autorotate": 1
-        }
-    });
+                "multiRes": {
+                    "basePath": "{{ v.basePath }}",
+                    "path": "{{ v.path }}",
+                    "extension": "{{ v.extension }}",
+                    "tileResolution": {{ v.tileResolution }},
+                    "maxLevel": {{ v.maxLevel }},
+                    "cubeResolution": {{ v.cubeResolution }},
+                    "autoLoad": true,
+                    "autorotate": 1
+                }
+            })
+        })
+        .catch((err) => console.log("Registration failed", err));
 </script>
 </body>
 </html>
